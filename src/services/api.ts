@@ -2,7 +2,7 @@ import { createVocabularyContentId } from '@/services/content'
 import type { JlptLevel, TestConfig, VocabularyWord } from '@/types/domain'
 import type { ContentProvider } from '@/services/contentProvider'
 
-const WORDS_ENDPOINT = 'https://jlpt-vocab-api.vercel.app/api/words'
+const WORDS_ENDPOINT = `${import.meta.env.VITE_API_BASE_URL ?? '/api/v1'}/vocabulary`
 
 export class VocabularyApiError extends Error {
     constructor(
@@ -89,7 +89,7 @@ function parsePage(value: unknown): ApiPage {
 }
 
 async function fetchPage(level: JlptLevel, offset: number, limit: number): Promise<ApiPage> {
-    const url = new URL(WORDS_ENDPOINT)
+    const url = new URL(WORDS_ENDPOINT, globalThis.location?.origin ?? 'http://localhost')
     url.searchParams.set('level', String(level))
     url.searchParams.set('offset', String(offset))
     url.searchParams.set('limit', String(limit))
@@ -138,11 +138,9 @@ async function fetchUniqueWords(
 
     while (words.length < needed) {
         const page = await fetchPage(level, offset, needed - words.length)
-        const pageWords = page.words
+        for (const word of page.words
             .map(parseWord)
-            .filter((word): word is VocabularyWord => word !== null)
-
-        for (const word of pageWords) {
+            .filter((item): item is VocabularyWord => item !== null)) {
             const key = questionKey(word)
             if (!seen.has(key)) {
                 seen.add(key)
@@ -210,9 +208,7 @@ export async function loadQuestions(config: TestConfig): Promise<{
     const fallbackCandidates = selectedLevels.flatMap((level) =>
         fallbackLevels(level).filter((candidate) => !selectedLevels.includes(candidate)),
     )
-    const candidateLevels = [...new Set(fallbackCandidates)]
-
-    for (const level of candidateLevels) {
+    for (const level of [...new Set(fallbackCandidates)]) {
         const remaining = config.questionCount - questions.length
         if (remaining === 0) break
 
@@ -230,6 +226,4 @@ export function getFallbackLevelsForTest(level: JlptLevel): JlptLevel[] {
     return fallbackLevels(level)
 }
 
-export const vocabularyApiProvider: ContentProvider = {
-    loadQuestions,
-}
+export const vocabularyApiProvider: ContentProvider = { loadQuestions }

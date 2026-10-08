@@ -2,112 +2,95 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getFallbackLevelsForTest, loadQuestions, VocabularyApiError } from '@/services/api'
 
-function page(
-    level: number,
-    words: Array<{ word: string; meaning: string; furigana: string; romaji: string }>,
-    total = words.length,
-) {
+interface TestWord {
+    word: string
+    meaning: string
+    furigana: string
+    romaji: string
+}
+
+function createPage(level: number, words: TestWord[], offset: number, limit: number) {
+    const selected = words.slice(offset, offset + limit)
     return {
-        total,
-        offset: 0,
-        limit: words.length,
-        words: words.map((word) => ({ ...word, level })),
+        total: words.length,
+        offset,
+        limit,
+        words: selected.map((word) => ({ ...word, level })),
     }
 }
 
-type FetchMock = (input: RequestInfo | URL) => Promise<Pick<Response, 'ok' | 'json'>>
+function mockApi(wordsByLevel: Partial<Record<number, TestWord[]>>) {
+    const fetchMock = vi.fn<typeof fetch>().mockImplementation(async (input) => {
+        const url = new URL(input.toString())
+        const level = Number(url.searchParams.get('level'))
+        const offset = Number(url.searchParams.get('offset'))
+        const limit = Number(url.searchParams.get('limit'))
+        return Response.json(createPage(level, wordsByLevel[level] ?? [], offset, limit))
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    return fetchMock
+}
 
-describe('vocabulary API adapter', () => {
-    beforeEach(() => vi.restoreAllMocks())
+describe('vocabulary API provider', () => {
+    beforeEach(() => {
+        vi.restoreAllMocks()
+        vi.unstubAllGlobals()
+    })
 
-    it('uses the selected level first and removes duplicate visible words', async () => {
-        const fetchMock = vi.fn<FetchMock>().mockResolvedValue({
-            ok: true,
-            json: async () =>
-                page(3, [
-                    { word: '学生', meaning: 'student', furigana: 'がくせい', romaji: 'gakusei' },
-                    { word: '学生', meaning: 'student', furigana: 'がくせい', romaji: 'gakusei' },
-                    { word: '先生', meaning: 'teacher', furigana: 'せんせい', romaji: 'sensei' },
-                ]),
+    it('requests selected-level pages and removes duplicate vocabulary', async () => {
+        const fetchMock = mockApi({
+            3: [
+                { word: '学生', meaning: 'student', furigana: 'がくせい', romaji: 'gakusei' },
+                { word: '学生', meaning: 'student', furigana: 'がくせい', romaji: 'gakusei' },
+                { word: '先生', meaning: 'teacher', furigana: 'せんせい', romaji: 'sensei' },
+            ],
         })
-        vi.stubGlobal('fetch', fetchMock)
 
         const result = await loadQuestions({ levels: [3], questionCount: 2 })
 
         expect(result.questions).toHaveLength(2)
-        expect(result.questions[0]?.meaning).toBeTruthy()
         expect(result.questions[0]?.contentId).toMatch(/^vocabulary:/)
-        expect(new Set(result.questions.map((word) => `${word.word}-${word.furigana}`)).size).toBe(
-            2,
-        )
-        expect(fetchMock.mock.calls[0]?.[0].toString()).toContain('level=3')
+        expect(new Set(result.questions.map((word) => `${word.word}-${word.furigana}`)).size).toBe(2)
+        expect(fetchMock.mock.calls[0]?.[0].toString()).toContain('/api/v1/vocabulary?level=3')
     })
 
-    it('falls back from N3 to easier and then harder adjacent levels', async () => {
-        const fetchMock = vi
-            .fn<FetchMock>()
-            .mockResolvedValueOnce({
-                ok: true,
-                json: async () =>
-                    page(3, [{ word: 'A', meaning: 'A', furigana: 'あ', romaji: 'a' }]),
-            })
-            .mockResolvedValueOnce({
-                ok: true,
-                json: async () =>
-                    page(4, [{ word: 'B', meaning: 'B', furigana: 'び', romaji: 'bi' }]),
-            })
-            .mockResolvedValueOnce({
-                ok: true,
-                json: async () =>
-                    page(2, [{ word: 'C', meaning: 'C', furigana: 'し', romaji: 'shi' }]),
-            })
-        vi.stubGlobal('fetch', fetchMock)
+    it('falls back to adjacent levels when the selected level is insufficient', async () => {
+        const fetchMock = mockApi({
+            2: [{ word: 'C', meaning: 'C', furigana: 'し', romaji: 'shi' }],
+            3: [{ word: 'A', meaning: 'A', furigana: 'あ', romaji: 'a' }],
+            4: [{ word: 'B', meaning: 'B', furigana: 'び', romaji: 'bi' }],
+        })
 
         const result = await loadQuestions({ levels: [3], questionCount: 3 })
 
         expect(result.questions).toHaveLength(3)
         expect(result.levelsUsed).toEqual([3, 4, 2])
-        expect(
-            fetchMock.mock.calls.map(([url]) => new URL(url.toString()).searchParams.get('level')),
-        ).toEqual(['3', '4', '2'])
+        expect(fetchMock.mock.calls.map(([input]) => new URL(input.toString()).searchParams.get('level')))
+            .toEqual(['3', '4', '2'])
     })
 
-    it('combines questions from every selected level', async () => {
-        const fetchMock = vi
-            .fn<FetchMock>()
-            .mockResolvedValueOnce({
-                ok: true,
-                json: async () =>
-                    page(5, [
-                        { word: 'A', meaning: 'A', furigana: 'あ', romaji: 'a' },
-                        { word: 'B', meaning: 'B', furigana: 'び', romaji: 'bi' },
-                    ]),
-            })
-            .mockResolvedValueOnce({
-                ok: true,
-                json: async () =>
-                    page(3, [
-                        { word: 'C', meaning: 'C', furigana: 'し', romaji: 'shi' },
-                        { word: 'D', meaning: 'D', furigana: 'で', romaji: 'de' },
-                    ]),
-            })
-        vi.stubGlobal('fetch', fetchMock)
+    it('combines questions from each selected level', async () => {
+        const fetchMock = mockApi({
+            3: [
+                { word: 'C', meaning: 'C', furigana: 'し', romaji: 'shi' },
+                { word: 'D', meaning: 'D', furigana: 'で', romaji: 'de' },
+            ],
+            5: [
+                { word: 'A', meaning: 'A', furigana: 'あ', romaji: 'a' },
+                { word: 'B', meaning: 'B', furigana: 'び', romaji: 'bi' },
+            ],
+        })
 
         const result = await loadQuestions({ levels: [5, 3], questionCount: 4 })
 
         expect(result.questions).toHaveLength(4)
         expect(result.questions.map((word) => word.level).sort()).toEqual([3, 3, 5, 5])
         expect(result.levelsUsed).toEqual([5, 3])
+        expect(fetchMock).toHaveBeenCalledTimes(2)
     })
 
-    it('reports an error when all levels are insufficient', async () => {
-        vi.stubGlobal(
-            'fetch',
-            vi.fn<FetchMock>().mockResolvedValue({
-                ok: true,
-                json: async () => page(1, []),
-            }),
-        )
+    it('reports an error when the API has insufficient vocabulary', async () => {
+        mockApi({ 1: [] })
 
         await expect(loadQuestions({ levels: [1], questionCount: 10 })).rejects.toBeInstanceOf(
             VocabularyApiError,

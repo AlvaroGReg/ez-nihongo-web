@@ -27,7 +27,11 @@ npm run test:unit -- --run
 npm run build
 ```
 
-The application uses the [JLPT Vocabulary API](https://jlpt-vocab-api.vercel.app/)
-and is configured for deployment to GitHub Pages at `/ez-nihongo/`. The
-deployment workflow is defined in
-[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml).
+Vocabulary is loaded from the
+[`ez-nihongo-platform`](https://github.com/AlvaroGReg/ez-nihongo-platform)
+ASP.NET Core API at `/api/v1/vocabulary`. For local development, the Vite dev
+server proxies API requests to `http://localhost:5080`; run the platform API or
+start the complete workspace with `deploy.ps1`.
+
+The app keeps the `/ez-nihongo/` base path for GitHub Pages builds. The
+workspace Docker build overrides it to `/` for the combined web/API stack.
