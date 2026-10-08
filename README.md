@@ -27,15 +27,11 @@ npm run test:unit -- --run
 npm run build
 ```
 
-Vocabulary is bundled from the public
+Vocabulary is loaded from the
 [`ez-nihongo-platform`](https://github.com/AlvaroGReg/ez-nihongo-platform)
-repository, included as the `data-source` Git submodule. Initialize it when
-cloning the web repository:
+ASP.NET Core API at `/api/v1/vocabulary`. For local development, the Vite dev
+server proxies API requests to `http://localhost:5080`; run the platform API or
+start the complete workspace with `deploy.ps1`.
 
-```sh
-git clone --recurse-submodules https://github.com/AlvaroGReg/ez-nihongo-web.git
-```
-
-The app is configured for deployment to GitHub Pages at `/ez-nihongo/`. The
-deployment workflow checks out the submodule and is defined in
-[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml).
+The app keeps the `/ez-nihongo/` base path for GitHub Pages builds. The
+workspace Docker build overrides it to `/` for the combined web/API stack.

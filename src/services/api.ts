@@ -1,28 +1,8 @@
-import n1 from '../../data-source/db/n1.json'
-import n2 from '../../data-source/db/n2.json'
-import n3 from '../../data-source/db/n3.json'
-import n4 from '../../data-source/db/n4.json'
-import n5 from '../../data-source/db/n5.json'
 import { createVocabularyContentId } from '@/services/content'
 import type { JlptLevel, TestConfig, VocabularyWord } from '@/types/domain'
 import type { ContentProvider } from '@/services/contentProvider'
 
-interface SourceWord {
-    word: string
-    meaning: { en?: string; es?: string }
-    furigana: string
-    romaji: string
-    level: JlptLevel
-    uuid?: string
-}
-
-const wordsByLevel: Record<JlptLevel, SourceWord[]> = {
-    1: n1 as SourceWord[],
-    2: n2 as SourceWord[],
-    3: n3 as SourceWord[],
-    4: n4 as SourceWord[],
-    5: n5 as SourceWord[],
-}
+const WORDS_ENDPOINT = `${import.meta.env.VITE_API_BASE_URL ?? '/api/v1'}/vocabulary`
 
 export class VocabularyApiError extends Error {
     constructor(
@@ -34,16 +14,102 @@ export class VocabularyApiError extends Error {
     }
 }
 
-export type VocabularyApiErrorCode = 'providerResponseError' | 'providerInsufficientError'
+export type VocabularyApiErrorCode =
+    | 'providerConnectionError'
+    | 'providerHttpError'
+    | 'providerResponseError'
+    | 'providerPageError'
+    | 'providerJsonError'
+    | 'providerInsufficientError'
 
-function toVocabularyWord(source: SourceWord): VocabularyWord {
+interface ApiPage {
+    total: number
+    offset: number
+    limit: number
+    words: unknown[]
+}
+
+function isJlptLevel(value: unknown): value is JlptLevel {
+    return value === 1 || value === 2 || value === 3 || value === 4 || value === 5
+}
+
+function parseWord(value: unknown): VocabularyWord | null {
+    if (typeof value !== 'object' || value === null) return null
+
+    const candidate = value as Record<string, unknown>
+    if (
+        typeof candidate.word !== 'string' ||
+        typeof candidate.meaning !== 'string' ||
+        typeof candidate.furigana !== 'string' ||
+        typeof candidate.romaji !== 'string' ||
+        candidate.word.trim() === '' ||
+        candidate.meaning.trim() === '' ||
+        candidate.romaji.trim() === '' ||
+        !isJlptLevel(candidate.level)
+    ) {
+        return null
+    }
+
     return {
-        contentId: source.uuid ?? createVocabularyContentId(source.word, source.furigana),
-        word: source.word,
-        meaning: source.meaning.en || source.meaning.es || '',
-        furigana: source.furigana,
-        romaji: source.romaji,
-        level: source.level,
+        contentId:
+            typeof candidate.contentId === 'string' && candidate.contentId.trim() !== ''
+                ? candidate.contentId
+                : typeof candidate.id === 'string' && candidate.id.trim() !== ''
+                  ? candidate.id
+                  : createVocabularyContentId(candidate.word, candidate.furigana),
+        word: candidate.word,
+        meaning: candidate.meaning,
+        furigana: candidate.furigana,
+        romaji: candidate.romaji,
+        level: candidate.level,
+    }
+}
+
+function parsePage(value: unknown): ApiPage {
+    if (typeof value !== 'object' || value === null) {
+        throw new VocabularyApiError('providerResponseError')
+    }
+
+    const candidate = value as Record<string, unknown>
+    if (
+        typeof candidate.total !== 'number' ||
+        typeof candidate.offset !== 'number' ||
+        typeof candidate.limit !== 'number' ||
+        !Array.isArray(candidate.words)
+    ) {
+        throw new VocabularyApiError('providerPageError')
+    }
+
+    return {
+        total: candidate.total,
+        offset: candidate.offset,
+        limit: candidate.limit,
+        words: candidate.words,
+    }
+}
+
+async function fetchPage(level: JlptLevel, offset: number, limit: number): Promise<ApiPage> {
+    const url = new URL(WORDS_ENDPOINT, globalThis.location?.origin ?? 'http://localhost')
+    url.searchParams.set('level', String(level))
+    url.searchParams.set('offset', String(offset))
+    url.searchParams.set('limit', String(limit))
+
+    let response: Response
+    try {
+        response = await fetch(url)
+    } catch {
+        throw new VocabularyApiError('providerConnectionError')
+    }
+
+    if (!response.ok) {
+        throw new VocabularyApiError('providerHttpError', `HTTP ${response.status}`)
+    }
+
+    try {
+        return parsePage(await response.json())
+    } catch (error) {
+        if (error instanceof VocabularyApiError) throw error
+        throw new VocabularyApiError('providerJsonError')
     }
 }
 
@@ -58,19 +124,44 @@ function fallbackLevels(selectedLevel: JlptLevel): JlptLevel[] {
     return levels
 }
 
-function isJlptLevel(value: number): value is JlptLevel {
-    return value >= 1 && value <= 5
-}
-
 function questionKey(word: VocabularyWord): string {
     return `${word.word}\u0000${word.furigana}`
+}
+
+async function fetchUniqueWords(
+    level: JlptLevel,
+    needed: number,
+    seen: Set<string>,
+): Promise<VocabularyWord[]> {
+    const words: VocabularyWord[] = []
+    let offset = 0
+
+    while (words.length < needed) {
+        const page = await fetchPage(level, offset, needed - words.length)
+        for (const word of page.words
+            .map(parseWord)
+            .filter((item): item is VocabularyWord => item !== null)) {
+            const key = questionKey(word)
+            if (!seen.has(key)) {
+                seen.add(key)
+                words.push(word)
+                if (words.length === needed) break
+            }
+        }
+
+        const nextOffset = page.offset + page.words.length
+        if (page.words.length === 0 || nextOffset <= offset || nextOffset >= page.total) break
+        offset = nextOffset
+    }
+
+    return words
 }
 
 function shuffle<T>(values: T[]): T[] {
     const shuffled = [...values]
     for (let index = shuffled.length - 1; index > 0; index -= 1) {
-        const other = Math.floor(Math.random() * (index + 1))
-        ;[shuffled[index]!, shuffled[other]!] = [shuffled[other]!, shuffled[index]!]
+        const otherIndex = Math.floor(Math.random() * (index + 1))
+        ;[shuffled[index]!, shuffled[otherIndex]!] = [shuffled[otherIndex]!, shuffled[index]!]
     }
     return shuffled
 }
@@ -79,37 +170,38 @@ export async function loadQuestions(config: TestConfig): Promise<{
     questions: VocabularyWord[]
     levelsUsed: JlptLevel[]
 }> {
-    const selectedLevels = [...new Set(config.levels)]
-    if (selectedLevels.length === 0 || config.questionCount <= 0) {
-        throw new VocabularyApiError('providerResponseError')
-    }
-
     const seen = new Set<string>()
     const questions: VocabularyWord[] = []
     const levelsUsed: JlptLevel[] = []
-    const addWords = (level: JlptLevel, needed: number): void => {
-        if (needed <= 0) return
-        const available = wordsByLevel[level]
-            .map(toVocabularyWord)
-            .filter((word) => word.word.trim() !== '' && word.meaning.trim() !== '' && word.romaji.trim() !== '')
-            .filter((word) => !seen.has(questionKey(word)))
-        const chosen = shuffle(available).slice(0, needed)
-        chosen.forEach((word) => seen.add(questionKey(word)))
-        if (chosen.length > 0 && !levelsUsed.includes(level)) levelsUsed.push(level)
-        questions.push(...chosen)
+    const selectedLevels = [...new Set(config.levels)]
+
+    if (selectedLevels.length === 0) {
+        throw new VocabularyApiError('providerResponseError')
+    }
+
+    const addWords = async (level: JlptLevel, needed: number): Promise<void> => {
+        if (needed === 0) return
+
+        const words = await fetchUniqueWords(level, needed, seen)
+        if (words.length > 0 && !levelsUsed.includes(level)) levelsUsed.push(level)
+        questions.push(...words)
     }
 
     const basePerLevel = Math.floor(config.questionCount / selectedLevels.length)
     let extraQuestions = config.questionCount % selectedLevels.length
+
     for (const level of selectedLevels) {
         const target = basePerLevel + (extraQuestions > 0 ? 1 : 0)
         extraQuestions -= 1
-        addWords(level, target)
+        await addWords(level, target)
     }
 
     if (selectedLevels.length > 1) {
         for (const level of selectedLevels) {
-            addWords(level, config.questionCount - questions.length)
+            const remaining = config.questionCount - questions.length
+            if (remaining === 0) break
+
+            await addWords(level, remaining)
         }
     }
 
@@ -117,7 +209,10 @@ export async function loadQuestions(config: TestConfig): Promise<{
         fallbackLevels(level).filter((candidate) => !selectedLevels.includes(candidate)),
     )
     for (const level of [...new Set(fallbackCandidates)]) {
-        addWords(level, config.questionCount - questions.length)
+        const remaining = config.questionCount - questions.length
+        if (remaining === 0) break
+
+        await addWords(level, remaining)
     }
 
     if (questions.length < config.questionCount) {

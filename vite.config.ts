@@ -6,8 +6,13 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 
 // https://vite.dev/config/
 export default defineConfig({
-    base: '/ez-nihongo/',
+    base: process.env.VITE_BASE_PATH ?? '/ez-nihongo/',
     plugins: [vue(), vueDevTools()],
+    server: {
+        proxy: {
+            '/api': 'http://localhost:5080',
+        },
+    },
     resolve: {
         alias: {
             '@': fileURLToPath(new URL('./src', import.meta.url)),
