@@ -1,6 +1,7 @@
 import { computed, reactive, type ComputedRef } from 'vue'
 
 import { VocabularyApiError, vocabularyApiProvider } from '@/services/api'
+import { locale } from '@/i18n'
 import { createReadingExercise, createVocabularyContentId } from '@/services/content'
 import type { ContentProvider, LoadQuestions } from '@/services/contentProvider'
 import { isRomajiCorrect } from '@/services/romaji'
@@ -79,7 +80,7 @@ export function createTestSessionStore(
         state.result = null
 
         try {
-            const loaded = await load(config)
+            const loaded = await load(config, locale.value)
             const questions = loaded.questions.map((question) => ({
                 ...question,
                 contentId:

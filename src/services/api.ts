@@ -1,5 +1,5 @@
 import { createVocabularyContentId } from '@/services/content'
-import type { JlptLevel, TestConfig, VocabularyWord } from '@/types/domain'
+import type { JlptLevel, Locale, TestConfig, VocabularyWord } from '@/types/domain'
 import type { ContentProvider } from '@/services/contentProvider'
 
 const WORDS_ENDPOINT = `${import.meta.env.VITE_API_BASE_URL ?? '/api/v1'}/vocabulary`
@@ -88,11 +88,12 @@ function parsePage(value: unknown): ApiPage {
     }
 }
 
-async function fetchPage(level: JlptLevel, offset: number, limit: number): Promise<ApiPage> {
+async function fetchPage(level: JlptLevel, offset: number, limit: number, locale: Locale): Promise<ApiPage> {
     const url = new URL(WORDS_ENDPOINT, globalThis.location?.origin ?? 'http://localhost')
     url.searchParams.set('level', String(level))
     url.searchParams.set('offset', String(offset))
     url.searchParams.set('limit', String(limit))
+    url.searchParams.set('language', locale)
 
     let response: Response
     try {
@@ -132,12 +133,13 @@ async function fetchUniqueWords(
     level: JlptLevel,
     needed: number,
     seen: Set<string>,
+    locale: Locale,
 ): Promise<VocabularyWord[]> {
     const words: VocabularyWord[] = []
     let offset = 0
 
     while (words.length < needed) {
-        const page = await fetchPage(level, offset, needed - words.length)
+        const page = await fetchPage(level, offset, needed - words.length, locale)
         for (const word of page.words
             .map(parseWord)
             .filter((item): item is VocabularyWord => item !== null)) {
@@ -166,7 +168,7 @@ function shuffle<T>(values: T[]): T[] {
     return shuffled
 }
 
-export async function loadQuestions(config: TestConfig): Promise<{
+export async function loadQuestions(config: TestConfig, locale: Locale = 'en'): Promise<{
     questions: VocabularyWord[]
     levelsUsed: JlptLevel[]
 }> {
@@ -182,7 +184,7 @@ export async function loadQuestions(config: TestConfig): Promise<{
     const addWords = async (level: JlptLevel, needed: number): Promise<void> => {
         if (needed === 0) return
 
-        const words = await fetchUniqueWords(level, needed, seen)
+        const words = await fetchUniqueWords(level, needed, seen, locale)
         if (words.length > 0 && !levelsUsed.includes(level)) levelsUsed.push(level)
         questions.push(...words)
     }

@@ -1,4 +1,4 @@
-import type { JlptLevel, TestConfig, VocabularyWord } from '@/types/domain'
+import type { JlptLevel, Locale, TestConfig, VocabularyWord } from '@/types/domain'
 
 export interface LoadedQuestions {
     questions: VocabularyWord[]
@@ -6,7 +6,7 @@ export interface LoadedQuestions {
 }
 
 export interface ContentProvider {
-    loadQuestions(config: TestConfig): Promise<LoadedQuestions>
+    loadQuestions(config: TestConfig, locale?: Locale): Promise<LoadedQuestions>
 }
 
-export type LoadQuestions = (config: TestConfig) => Promise<LoadedQuestions>
+export type LoadQuestions = (config: TestConfig, locale?: Locale) => Promise<LoadedQuestions>

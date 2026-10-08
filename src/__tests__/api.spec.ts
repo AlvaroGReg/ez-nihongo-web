@@ -52,6 +52,17 @@ describe('vocabulary API provider', () => {
         expect(result.questions[0]?.contentId).toMatch(/^vocabulary:/)
         expect(new Set(result.questions.map((word) => `${word.word}-${word.furigana}`)).size).toBe(2)
         expect(fetchMock.mock.calls[0]?.[0].toString()).toContain('/api/v1/vocabulary?level=3')
+        expect(new URL(fetchMock.mock.calls[0]![0].toString()).searchParams.get('language')).toBe('en')
+    })
+
+    it('requests vocabulary meanings in the selected locale', async () => {
+        const fetchMock = mockApi({
+            3: [{ word: '学生', meaning: 'estudiante', furigana: 'がくせい', romaji: 'gakusei' }],
+        })
+
+        await loadQuestions({ levels: [3], questionCount: 1 }, 'es')
+
+        expect(new URL(fetchMock.mock.calls[0]![0].toString()).searchParams.get('language')).toBe('es')
     })
 
     it('falls back to adjacent levels when the selected level is insufficient', async () => {
