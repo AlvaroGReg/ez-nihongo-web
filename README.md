@@ -27,7 +27,15 @@ npm run test:unit -- --run
 npm run build
 ```
 
-The application uses the [JLPT Vocabulary API](https://jlpt-vocab-api.vercel.app/)
-and is configured for deployment to GitHub Pages at `/ez-nihongo/`. The
-deployment workflow is defined in
+Vocabulary is bundled from the public
+[`ez-nihongo-platform`](https://github.com/AlvaroGReg/ez-nihongo-platform)
+repository, included as the `data-source` Git submodule. Initialize it when
+cloning the web repository:
+
+```sh
+git clone --recurse-submodules https://github.com/AlvaroGReg/ez-nihongo-web.git
+```
+
+The app is configured for deployment to GitHub Pages at `/ez-nihongo/`. The
+deployment workflow checks out the submodule and is defined in
 [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml).
