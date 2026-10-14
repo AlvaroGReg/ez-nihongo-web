@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { t } from '@/i18n'
+import { auth } from '@/stores/auth'
 import { testSession } from '@/stores/testSession'
 import type { JlptLevel } from '@/types/domain'
 
@@ -59,6 +60,18 @@ function backToSetup(): void {
             <p class="eyebrow">{{ t('appEyebrow') }}</p>
             <h1 id="app-title">{{ t('appTitle') }}</h1>
             <p class="hero-copy">{{ t('homeDescription') }}</p>
+
+            <div class="account-row" aria-live="polite">
+                <template v-if="auth.state.user">
+                    <span>{{ t('signedInAs', { email: auth.state.user.email }) }}</span>
+                    <button class="button button-quiet" type="button" @click="auth.signOut">
+                        {{ t('signOut') }}
+                    </button>
+                </template>
+                <RouterLink v-else class="button button-secondary" to="/auth">
+                    {{ t('loginOrRegister') }}
+                </RouterLink>
+            </div>
 
             <form class="setup-form" @submit.prevent="startTest">
                 <div class="form-grid">
