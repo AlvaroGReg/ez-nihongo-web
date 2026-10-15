@@ -2,13 +2,34 @@ import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
 
 import { setLocale } from '@/i18n'
+import ExerciseView from '@/views/ExerciseView.vue'
 import HomeView from '@/views/HomeView.vue'
 import router from '@/router'
 
+async function chooseExercise(
+    wrapper: ReturnType<typeof mount>,
+    type: 'kana' | 'kanji',
+): Promise<void> {
+    await wrapper
+        .findAll('.exercise-tab')
+        .find((button) => button.text().toLowerCase() === type)!
+        .trigger('click')
+}
+
 describe('HomeView', () => {
+    it('briefly describes the implemented exercises and links to their selection', () => {
+        const wrapper = mount(HomeView, {
+            global: { plugins: [router] },
+        })
+
+        expect(wrapper.text()).toContain('Vocabulary: study words from JLPT levels N1–N5.')
+        expect(wrapper.text()).toContain('Kanji: practice JLPT readings and meanings from N1–N5.')
+        expect(wrapper.get('a[href="#/exercises"]').text()).toBe('Go to exercises')
+    })
+
     it('renders the setup in the selected locale', () => {
         setLocale('es')
-        const wrapper = mount(HomeView, {
+        const wrapper = mount(ExerciseView, {
             global: { plugins: [router] },
         })
 
@@ -19,7 +40,7 @@ describe('HomeView', () => {
     })
 
     it('offers all JLPT levels and a draggable question count', () => {
-        const wrapper = mount(HomeView, {
+        const wrapper = mount(ExerciseView, {
             global: { plugins: [router] },
         })
 
@@ -34,13 +55,16 @@ describe('HomeView', () => {
     })
 
     it('offers a combined kana exercise and disables the count for a complete exam', async () => {
-        const wrapper = mount(HomeView, {
+        const wrapper = mount(ExerciseView, {
             global: { plugins: [router] },
         })
 
-        await wrapper.get('select').setValue('kana')
+        await chooseExercise(wrapper, 'kana')
         expect(wrapper.text()).toContain('Kana to romaji')
-        expect(wrapper.findAll('select')).toHaveLength(2)
+        expect(wrapper.findAll('select')).toHaveLength(0)
+        expect(wrapper.get('.kana-direction-tab[aria-pressed="true"]').text()).toBe(
+            'Kana to romaji',
+        )
 
         await wrapper
             .get('.kana-category-gojuon .kana-choice:not(.kana-category-all)')
@@ -54,11 +78,11 @@ describe('HomeView', () => {
     })
 
     it('offers offline N1-N5 kanji reading and meaning exercises', async () => {
-        const wrapper = mount(HomeView, {
+        const wrapper = mount(ExerciseView, {
             global: { plugins: [router] },
         })
 
-        await wrapper.get('select').setValue('kanji')
+        await chooseExercise(wrapper, 'kanji')
 
         expect(wrapper.text()).toContain('Kanji reading')
         expect(wrapper.text()).toContain('Kanji meaning')
@@ -68,18 +92,19 @@ describe('HomeView', () => {
         expect(wrapper.text()).toContain('N1')
 
         const selects = wrapper.findAll('select')
-        await selects[1]!.setValue('meaning')
-        expect(selects[1]!.element).toHaveProperty('value', 'meaning')
+        await selects[0]!.setValue('meaning')
+        expect(selects[0]!.element).toHaveProperty('value', 'meaning')
     })
 
     it('notifies when selected kanji levels do not have Spanish translations', async () => {
         setLocale('es')
-        const wrapper = mount(HomeView, {
+        const wrapper = mount(ExerciseView, {
             global: { plugins: [router] },
         })
 
-        await wrapper.get('select').setValue('kanji')
+        await chooseExercise(wrapper, 'kanji')
         expect(wrapper.find('.kanji-translation-notice').exists()).toBe(false)
+        expect(wrapper.get('.form-grid').classes()).not.toContain('kanji-warning-visible')
 
         for (const level of [3, 2, 1]) {
             await wrapper.get(`input[type="checkbox"][value="${level}"]`).setValue(true)
@@ -89,18 +114,24 @@ describe('HomeView', () => {
         expect(wrapper.get('.kanji-translation-notice').text()).toContain(
             'no están traducidos al español',
         )
+        expect(wrapper.get('.form-grid').classes()).toContain('kanji-warning-visible')
         setLocale('en')
     })
 
     it('explains the conversion exercise and how kana selections work', async () => {
-        const wrapper = mount(HomeView, {
+        const wrapper = mount(ExerciseView, {
             global: { plugins: [router] },
         })
 
-        await wrapper.get('select').setValue('kana')
-        const selects = wrapper.findAll('select')
-        await selects[1]!.setValue('hiragana-to-katakana')
+        await chooseExercise(wrapper, 'kana')
+        await wrapper
+            .findAll('.kana-direction-tab')
+            .find((button) => button.text() === 'Convert between kana')!
+            .trigger('click')
 
+        expect(
+            wrapper.get('.kana-direction-tab[aria-pressed="true"]').text(),
+        ).toBe('Convert between kana')
         expect(wrapper.get('.kana-direction-help').text()).toContain(
             'write its equivalent in the other',
         )
@@ -110,11 +141,11 @@ describe('HomeView', () => {
     })
 
     it('selects every main kana row and clears the category when one row is deselected', async () => {
-        const wrapper = mount(HomeView, {
+        const wrapper = mount(ExerciseView, {
             global: { plugins: [router] },
         })
 
-        await wrapper.get('select').setValue('kana')
+        await chooseExercise(wrapper, 'kana')
         const gojuon = wrapper.get('.kana-category-gojuon .kana-category-all')
         await gojuon.trigger('click')
 
@@ -147,11 +178,11 @@ describe('HomeView', () => {
     })
 
     it('selects both scripts and all kana from a partial selection', async () => {
-        const wrapper = mount(HomeView, {
+        const wrapper = mount(ExerciseView, {
             global: { plugins: [router] },
         })
 
-        await wrapper.get('select').setValue('kana')
+        await chooseExercise(wrapper, 'kana')
         await wrapper
             .get('.kana-category-gojuon .kana-choice:not(.kana-category-all)')
             .trigger('click')
@@ -167,10 +198,10 @@ describe('HomeView', () => {
     })
 
     it('shows katakana row labels when hiragana is not selected', async () => {
-        const wrapper = mount(HomeView, {
+        const wrapper = mount(ExerciseView, {
             global: { plugins: [router] },
         })
-        await wrapper.get('select').setValue('kana')
+        await chooseExercise(wrapper, 'kana')
         await wrapper
             .findAll('.kana-script-tab')
             .find((button) => button.text().includes('Katakana'))!

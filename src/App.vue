@@ -2,6 +2,7 @@
 import { useRouter } from 'vue-router'
 
 import AppToolbar from '@/components/AppToolbar.vue'
+import FloatingContactLink from '@/components/FloatingContactLink.vue'
 import { t } from '@/i18n'
 import { testSession } from '@/stores/testSession'
 
@@ -22,6 +23,7 @@ function abandon(): void {
 <template>
     <AppToolbar />
     <RouterView />
+    <FloatingContactLink />
 
     <div v-if="testSession.state.needsResume" class="modal-backdrop" role="presentation">
         <section class="modal" role="dialog" aria-modal="true" aria-labelledby="resume-title">

@@ -19,4 +19,34 @@ describe('App', () => {
         expect(wrapper.find('select').element).toBeDefined()
         expect(wrapper.find('button[aria-label="Switch to dark theme"]').element).toBeDefined()
     })
+
+    it('opens the vertical navigation with links to exercises and dictionary', async () => {
+        const wrapper = mount(App, {
+            global: {
+                plugins: [router],
+                stubs: { RouterView: true },
+            },
+        })
+
+        await wrapper.get('.menu-toggle').trigger('click')
+
+        expect(wrapper.get('.toolbar-brand').text()).toBe('EZ Nihongo')
+        expect(wrapper.get('.navigation-menu a').attributes('href')).toBe('#/exercises')
+        expect(wrapper.get('.dictionary-link').attributes('href')).toBe('#/dictionary')
+        expect(wrapper.get('.navigation-menu a:last-child').attributes('href')).toBe('#/about')
+        expect(wrapper.get('.navigation-menu a:last-child').text()).toBe('About')
+    })
+
+    it('keeps the floating shortcut available and links to About', () => {
+        const wrapper = mount(App, {
+            global: {
+                plugins: [router],
+                stubs: { RouterView: true },
+            },
+        })
+
+        const shortcut = wrapper.get('.floating-contact-link')
+        expect(shortcut.attributes('href')).toBe('#/about')
+        expect(shortcut.get('img').attributes('src')).toMatch(/logos\/agreg_blue\.png$/)
+    })
 })
