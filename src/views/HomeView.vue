@@ -10,7 +10,9 @@ import type { KanaDirection, KanaRow, KanaScript, KanaType, JlptLevel } from '@/
 const router = useRouter()
 const selectedLevels = ref<JlptLevel[]>([5])
 const questionCount = ref(10)
-const exerciseType = ref<'vocabulary' | 'kana'>('vocabulary')
+const exerciseType = ref<'vocabulary' | 'kanji' | 'kana'>('vocabulary')
+const kanjiExerciseType = ref<'reading' | 'meaning'>('reading')
+const selectedKanjiLevels = ref<JlptLevel[]>([5])
 const kanaDirection = ref<KanaDirection>('hiragana-to-romaji')
 const selectedKanaScripts = ref<KanaScript[]>(['hiragana'])
 const selectedKanaRows = ref<KanaRow[]>([])
@@ -26,7 +28,16 @@ const levels = [
     { value: 1 as JlptLevel, label: 'N1' },
 ]
 const hasApiError = computed(() => testSession.state.error !== null)
-const isKanaExercise = computed(() => exerciseType.value !== 'vocabulary')
+const isKanaExercise = computed(() => exerciseType.value === 'kana')
+const isKanjiExercise = computed(() => exerciseType.value === 'kanji')
+const displayedLevels = computed(() => (isKanjiExercise.value ? levels.slice(0, 2) : levels))
+const selectedContentLevels = computed({
+    get: () => (isKanjiExercise.value ? selectedKanjiLevels.value : selectedLevels.value),
+    set: (value: JlptLevel[]) => {
+        if (isKanjiExercise.value) selectedKanjiLevels.value = value
+        else selectedLevels.value = value
+    },
+})
 const selectedKanaEntries = computed(() =>
     selectKanaEntries({ rows: selectedKanaRows.value, types: selectedKanaTypes.value }).flatMap(
         (entry) => selectedKanaScripts.value.map((script) => ({ entry, script })),
@@ -110,7 +121,7 @@ watch([exerciseType, selectedKanaEntries], ([type, entries]) => {
     if (type === 'kana' && !directions.value.some(({ value }) => value === kanaDirection.value)) {
         kanaDirection.value = 'hiragana-to-romaji'
     }
-    if (type === 'vocabulary') {
+    if (type !== 'kana') {
         fullExam.value = false
         if (questionCount.value < 10) questionCount.value = 10
     } else if (questionCount.value > entries.length) {
@@ -123,7 +134,7 @@ async function startTest(): Promise<void> {
     testSession.clearError()
 
     const isKana = isKanaExercise.value
-    if (!isKana && selectedLevels.value.length === 0) {
+    if (!isKana && selectedContentLevels.value.length === 0) {
         validationError.value = 'chooseLevelError'
         return
     }
@@ -140,7 +151,7 @@ async function startTest(): Promise<void> {
 
     if (
         await testSession.startTest({
-            levels: isKana ? [5] : [...selectedLevels.value],
+            levels: isKana ? [5] : [...selectedContentLevels.value],
             questionCount:
                 isKana && fullExam.value ? selectedKanaEntries.value.length : questionCount.value,
             ...(isKana
@@ -152,7 +163,12 @@ async function startTest(): Promise<void> {
                       kanaTypes: selectedKanaTypes.value,
                       fullExam: fullExam.value,
                   }
-                : { contentType: 'vocabulary' as const }),
+                : isKanjiExercise.value
+                  ? {
+                        contentType: 'kanji' as const,
+                        exerciseType: kanjiExerciseType.value,
+                    }
+                  : { contentType: 'vocabulary' as const }),
         })
     ) {
         await router.push('/test')
@@ -181,11 +197,12 @@ function backToSetup(): void {
                         <span>{{ t('exerciseType') }}</span>
                         <select v-model="exerciseType">
                             <option value="vocabulary">{{ t('vocabularyExercise') }}</option>
+                            <option value="kanji">{{ t('kanjiExercise') }}</option>
                             <option value="kana">{{ t('kanaExercise') }}</option>
                         </select>
                     </label>
 
-                    <label v-if="exerciseType !== 'vocabulary'" class="field">
+                    <label v-if="isKanaExercise" class="field">
                         <span>{{ t('exerciseDirection') }}</span>
                         <select v-model="kanaDirection">
                             <option
@@ -206,12 +223,16 @@ function backToSetup(): void {
                         {{ t('kanaConversionHelp') }}
                     </p>
 
-                    <fieldset v-if="exerciseType === 'vocabulary'" class="field level-fieldset">
+                    <fieldset v-if="!isKanaExercise" class="field level-fieldset">
                         <legend>{{ t('jlptLevels') }}</legend>
                         <div class="level-options">
-                            <label v-for="level in levels" :key="level.value" class="check-option">
+                            <label
+                                v-for="level in displayedLevels"
+                                :key="level.value"
+                                class="check-option"
+                            >
                                 <input
-                                    v-model="selectedLevels"
+                                    v-model="selectedContentLevels"
                                     type="checkbox"
                                     :value="level.value"
                                 />
@@ -219,6 +240,14 @@ function backToSetup(): void {
                             </label>
                         </div>
                     </fieldset>
+
+                    <label v-if="isKanjiExercise" class="field">
+                        <span>{{ t('exerciseType') }}</span>
+                        <select v-model="kanjiExerciseType">
+                            <option value="reading">{{ t('kanjiReadingExercise') }}</option>
+                            <option value="meaning">{{ t('kanjiMeaningExercise') }}</option>
+                        </select>
+                    </label>
 
                     <fieldset v-if="isKanaExercise" class="field kana-map-field">
                         <legend>{{ t('kanaPractice') }}</legend>
@@ -282,7 +311,15 @@ function backToSetup(): void {
 
                     <label class="field">
                         <span class="range-label">
-                            <span>{{ t(isKanaExercise ? 'questionCount' : 'numberOfWords') }}</span>
+                            <span>
+                                {{
+                                    t(
+                                        isKanaExercise || isKanjiExercise
+                                            ? 'questionCount'
+                                            : 'numberOfWords',
+                                    )
+                                }}
+                            </span>
                             <output>
                                 {{ fullExam ? selectedKanaEntries.length : questionCount }}
                             </output>
@@ -294,7 +331,13 @@ function backToSetup(): void {
                             :min="isKanaExercise ? 1 : 10"
                             :max="isKanaExercise ? selectedKanaEntries.length : 100"
                             :step="isKanaExercise ? 1 : 10"
-                            :aria-label="t(isKanaExercise ? 'questionCount' : 'numberOfWords')"
+                            :aria-label="
+                                t(
+                                    isKanaExercise || isKanjiExercise
+                                        ? 'questionCount'
+                                        : 'numberOfWords',
+                                )
+                            "
                             :disabled="fullExam"
                         />
                         <span v-if="!fullExam" class="range-limits" aria-hidden="true">
@@ -303,10 +346,7 @@ function backToSetup(): void {
                         </span>
                     </label>
 
-                    <label
-                        v-if="exerciseType !== 'vocabulary'"
-                        class="check-option full-exam-option"
-                    >
+                    <label v-if="isKanaExercise" class="check-option full-exam-option">
                         <input v-model="fullExam" type="checkbox" />
                         <span>{{ t('fullKanaExam') }}</span>
                     </label>

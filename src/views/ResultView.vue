@@ -45,14 +45,22 @@ function startAnotherTest(): void {
                 <ul class="mistake-list">
                     <li v-for="mistake in mistakes" :key="mistake.questionIndex">
                         <strong>{{ mistake.question?.word }}</strong>
-                        <span v-if="mistake.question?.furigana">{{
-                            mistake.question.furigana
-                        }}</span>
+                        <span
+                            v-if="
+                                mistake.question?.furigana &&
+                                !(
+                                    result.config.contentType === 'kanji' &&
+                                    result.config.exerciseType === 'meaning'
+                                )
+                            "
+                            >{{ mistake.question.furigana }}</span
+                        >
                         <span>{{ t('yourAnswer') }}: {{ mistake.response || t('noAnswer') }}</span>
                         <span>
                             {{
                                 t(
-                                    result.config.contentType === 'kana'
+                                    result.config.contentType === 'kana' ||
+                                        result.config.contentType === 'kanji'
                                         ? 'correctAnswer'
                                         : 'correctRomanji',
                                 )

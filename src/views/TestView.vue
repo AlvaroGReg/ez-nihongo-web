@@ -12,7 +12,23 @@ const responseInput = ref<HTMLInputElement | null>(null)
 const feedbackPanel = ref<HTMLElement | null>(null)
 const currentQuestion = testSession.currentQuestion
 const isKana = computed(() => testSession.state.activeSession?.contentType === 'kana')
+const isKanji = computed(() => testSession.state.activeSession?.contentType === 'kanji')
+const isMeaningExercise = computed(
+    () => testSession.state.activeSession?.exerciseType === 'meaning',
+)
+const showReadingHint = ref(false)
+const answerOptions = computed(() => {
+    const session = testSession.state.activeSession
+    return session?.answerOptions?.[session.currentIndex] ?? []
+})
+const pendingFeedback = computed(() => testSession.state.activeSession?.pendingFeedback ?? null)
 const promptLabel = computed(() => {
+    const session = testSession.state.activeSession
+    if (session?.contentType === 'kanji') {
+        return t(isMeaningExercise.value ? 'kanjiMeaningPrompt' : 'kanjiReadingPrompt', {
+            levels: session.config.levels.map((level) => `N${level}`).join(' + '),
+        })
+    }
     const direction = testSession.state.activeSession?.config.kanaDirection ?? 'hiragana-to-romaji'
     const labels: Record<string, string> = {
         'hiragana-to-romaji': 'kanaToRomaji',
@@ -53,6 +69,10 @@ function submitAnswer(): void {
     if (testSession.submitAnswer(response.value)) focusFeedback()
 }
 
+function submitChoice(choice: string): void {
+    if (testSession.submitAnswer(choice)) focusFeedback()
+}
+
 function continueTest(): void {
     const finished = testSession.continueTest()
     response.value = ''
@@ -80,6 +100,7 @@ onMounted(() => {
 watch(
     () => testSession.state.activeSession?.currentIndex,
     () => {
+        showReadingHint.value = false
         if (testSession.state.activeSession?.pendingFeedback === null) focusResponse()
     },
 )
@@ -110,12 +131,47 @@ watch(
                 {{ testSession.state.activeSession.questions.length }}
             </p>
             <h1 id="question-word" class="japanese-word">{{ currentQuestion.word }}</h1>
-            <p v-if="currentQuestion.furigana" class="furigana">
+            <p v-if="!isKanji && currentQuestion.furigana" class="furigana">
                 {{ currentQuestion.furigana }}
             </p>
 
+            <p v-if="isKanji" class="kanji-question-instruction">
+                {{ t(isMeaningExercise ? 'chooseMeaning' : 'chooseReading') }}
+            </p>
+
+            <div v-if="isKanji && isMeaningExercise" class="kanji-reading-hint">
+                <button
+                    v-if="!showReadingHint && !testSession.state.activeSession.pendingFeedback"
+                    class="button button-quiet"
+                    type="button"
+                    @click="showReadingHint = true"
+                >
+                    {{ t('showReadingHint') }}
+                </button>
+                <p v-if="showReadingHint" class="furigana" aria-live="polite">
+                    {{ t('readingHint') }}: {{ currentQuestion.furigana }}
+                </p>
+            </div>
+
+            <div
+                v-if="isKanji && !testSession.state.activeSession.pendingFeedback"
+                class="kanji-answer-options"
+                role="group"
+                :aria-label="t(isMeaningExercise ? 'chooseMeaning' : 'chooseReading')"
+            >
+                <button
+                    v-for="option in answerOptions"
+                    :key="option"
+                    class="button button-secondary kanji-answer-option"
+                    type="button"
+                    @click="submitChoice(option)"
+                >
+                    {{ option }}
+                </button>
+            </div>
+
             <form
-                v-if="!testSession.state.activeSession.pendingFeedback"
+                v-if="!isKanji && !testSession.state.activeSession.pendingFeedback"
                 class="answer-form"
                 @submit.prevent="submitAnswer"
             >
@@ -141,34 +197,38 @@ watch(
             </form>
 
             <section
-                v-else
+                v-if="pendingFeedback"
                 ref="feedbackPanel"
                 class="feedback"
                 tabindex="-1"
                 :class="{
-                    'feedback-correct': testSession.state.activeSession.pendingFeedback.isCorrect,
+                    'feedback-correct': pendingFeedback?.isCorrect,
                 }"
                 role="status"
                 @keydown.enter.prevent="continueTest"
             >
                 <p class="feedback-title">
-                    {{
-                        testSession.state.activeSession.pendingFeedback.isCorrect
-                            ? t('correct')
-                            : t('notQuite')
-                    }}
+                    {{ pendingFeedback?.isCorrect ? t('correct') : t('notQuite') }}
                 </p>
                 <p>
                     {{ t('yourAnswer') }}:
-                    <strong>{{ testSession.state.activeSession.pendingFeedback.response }}</strong>
+                    <strong>{{ pendingFeedback?.response }}</strong>
                 </p>
                 <p v-if="!isKana">
                     {{ t('meaning') }}:
                     <strong>{{ currentQuestion.meaning }}</strong>
                 </p>
-                <p v-if="isKana || !testSession.state.activeSession.pendingFeedback.isCorrect">
-                    {{ t(isKana ? 'correctAnswer' : 'correctRomanji') }}:
-                    <strong>{{ testSession.state.activeSession.pendingFeedback.expected }}</strong>
+                <p
+                    v-if="
+                        isKana ||
+                        (!isKanji && !pendingFeedback?.isCorrect) ||
+                        (isKanji && !isMeaningExercise)
+                    "
+                >
+                    {{
+                        t(isKanji ? 'correctAnswer' : isKana ? 'correctAnswer' : 'correctRomanji')
+                    }}:
+                    <strong>{{ pendingFeedback?.expected }}</strong>
                 </p>
                 <button
                     class="button button-primary button-wide"
@@ -187,5 +247,31 @@ watch(
     margin-inline: auto;
     margin-top: 1.5rem;
     text-align: center;
+}
+
+.kanji-question-instruction {
+    color: var(--muted);
+}
+
+.kanji-reading-hint {
+    margin-block: 1rem;
+}
+
+.kanji-answer-options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.kanji-answer-option {
+    min-height: 3.5rem;
+    font-size: 1.1rem;
+}
+
+@media (max-width: 480px) {
+    .kanji-answer-options {
+        grid-template-columns: 1fr;
+    }
 }
 </style>

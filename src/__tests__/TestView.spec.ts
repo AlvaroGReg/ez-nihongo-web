@@ -45,4 +45,51 @@ describe('TestView', () => {
         expect(testSession.state.activeSession).toBeNull()
         expect(testSession.state.result?.score).toBe(1)
     })
+
+    it('shows the meaning hint during the question and accepts a multiple-choice answer', async () => {
+        testSession.state.activeSession = {
+            ...structuredClone(session),
+            contentType: 'kanji',
+            exerciseType: 'meaning',
+            answerOptions: [['cat', 'dog', 'bird', 'fish']],
+        }
+        const wrapper = mount(TestView, {
+            global: { plugins: [router] },
+        })
+
+        expect(wrapper.text()).not.toContain('ねこ')
+        expect(wrapper.text()).not.toContain('Correct!')
+        expect(wrapper.findAll('.kanji-answer-option')).toHaveLength(4)
+        await wrapper.get('.kanji-reading-hint button').trigger('click')
+        expect(wrapper.text()).toContain('Reading: ねこ')
+
+        await wrapper
+            .findAll('.kanji-answer-option')
+            .find((option) => option.text() === 'cat')!
+            .trigger('click')
+
+        expect(wrapper.text()).toContain('Correct!')
+        expect(wrapper.text()).toContain('Meaning:')
+        expect(wrapper.text()).toContain('cat')
+    })
+
+    it('does not reveal the meaning-exercise reading after an answer unless requested as a hint', async () => {
+        testSession.state.activeSession = {
+            ...structuredClone(session),
+            contentType: 'kanji',
+            exerciseType: 'meaning',
+            answerOptions: [['cat', 'dog', 'bird', 'fish']],
+        }
+        const wrapper = mount(TestView, {
+            global: { plugins: [router] },
+        })
+
+        await wrapper
+            .findAll('.kanji-answer-option')
+            .find((option) => option.text() === 'cat')!
+            .trigger('click')
+
+        expect(wrapper.text()).toContain('Correct!')
+        expect(wrapper.text()).not.toContain('ねこ')
+    })
 })

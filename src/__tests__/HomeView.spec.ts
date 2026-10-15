@@ -53,6 +53,24 @@ describe('HomeView', () => {
         expect(wrapper.text()).toContain('38')
     })
 
+    it('offers offline N5/N4 kanji reading and meaning exercises', async () => {
+        const wrapper = mount(HomeView, {
+            global: { plugins: [router] },
+        })
+
+        await wrapper.get('select').setValue('kanji')
+
+        expect(wrapper.text()).toContain('Kanji reading')
+        expect(wrapper.text()).toContain('Kanji meaning')
+        expect(wrapper.findAll('input[type="checkbox"]')).toHaveLength(2)
+        expect(wrapper.text()).toContain('N5')
+        expect(wrapper.text()).toContain('N4')
+
+        const selects = wrapper.findAll('select')
+        await selects[1]!.setValue('meaning')
+        expect(selects[1]!.element).toHaveProperty('value', 'meaning')
+    })
+
     it('explains the conversion exercise and how kana selections work', async () => {
         const wrapper = mount(HomeView, {
             global: { plugins: [router] },
