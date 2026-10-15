@@ -73,12 +73,12 @@ seguir usando el catálogo local.
 
 ### US-05 — Practicar kanji JLPT sin conexión
 
-Como estudiante, quiero practicar la lectura y el significado de palabras con
-kanji de N5 y N4 sin necesitar una cuenta ni conexión con la API.
+Como estudiante, quiero practicar la lectura y el significado de kanji N1–N5
+sin necesitar una cuenta ni conexión con la API.
 
-**REQ-14:** La configuración debe permitir elegir N5, N4 o ambos para kanji,
-y cargar únicamente palabras con al menos un carácter Han desde el catálogo
-local empaquetado.
+**REQ-14:** La configuración debe permitir elegir cualquier combinación de
+N1–N5 para kanji y cargar los caracteres desde los archivos locales de su nivel.
+No se incluye la categoría `extra`.
 
 **REQ-15:** Cada ejercicio de lectura o significado debe ofrecer cuatro
 respuestas de selección múltiple distintas, incluida exactamente una opción
@@ -98,13 +98,16 @@ anteriores.
 mantenerlas al reanudarla; al avanzar a una pregunta, sus opciones pueden
 incorporar errores previos de esa misma sesión.
 
+**REQ-19:** Al seleccionar N1, N2 o N3, la configuración debe avisar que sus
+significados no están traducidos al español y que se mostrarán en inglés. Para
+N4 y N5 se utilizarán las traducciones españolas disponibles.
+
 ## Fuera de alcance
 
 - Supabase/Auth, CMS, Stripe y webhooks.
 - Persistencia remota o sincronización entre dispositivos.
 - Catálogo completo de kana, kanji o gramática.
-- Fichas de kanji aislados con lecturas individuales, trazos, radicales o
-  componentes; los ejercicios de kanji 0.2.0 se basan en palabras del catálogo.
+- Información de trazos, orden de escritura, radicales o componentes de kanji.
 - SRS, cola de repasos y analítica de usuario.
 - IA, comunidad, móvil y modo offline completo de la aplicación (shell y
   recursos disponibles sin haber cargado previamente el cliente).

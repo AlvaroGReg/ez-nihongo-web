@@ -53,7 +53,7 @@ describe('HomeView', () => {
         expect(wrapper.text()).toContain('38')
     })
 
-    it('offers offline N5/N4 kanji reading and meaning exercises', async () => {
+    it('offers offline N1-N5 kanji reading and meaning exercises', async () => {
         const wrapper = mount(HomeView, {
             global: { plugins: [router] },
         })
@@ -62,13 +62,34 @@ describe('HomeView', () => {
 
         expect(wrapper.text()).toContain('Kanji reading')
         expect(wrapper.text()).toContain('Kanji meaning')
-        expect(wrapper.findAll('input[type="checkbox"]')).toHaveLength(2)
+        expect(wrapper.findAll('input[type="checkbox"]')).toHaveLength(5)
         expect(wrapper.text()).toContain('N5')
         expect(wrapper.text()).toContain('N4')
+        expect(wrapper.text()).toContain('N1')
 
         const selects = wrapper.findAll('select')
         await selects[1]!.setValue('meaning')
         expect(selects[1]!.element).toHaveProperty('value', 'meaning')
+    })
+
+    it('notifies when selected kanji levels do not have Spanish translations', async () => {
+        setLocale('es')
+        const wrapper = mount(HomeView, {
+            global: { plugins: [router] },
+        })
+
+        await wrapper.get('select').setValue('kanji')
+        expect(wrapper.find('.kanji-translation-notice').exists()).toBe(false)
+
+        for (const level of [3, 2, 1]) {
+            await wrapper.get(`input[type="checkbox"][value="${level}"]`).setValue(true)
+        }
+
+        expect(wrapper.get('.kanji-translation-notice').text()).toContain('N3, N2, N1')
+        expect(wrapper.get('.kanji-translation-notice').text()).toContain(
+            'no están traducidos al español',
+        )
+        setLocale('en')
     })
 
     it('explains the conversion exercise and how kana selections work', async () => {

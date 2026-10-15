@@ -57,6 +57,12 @@ function isVocabularyWord(value: unknown): boolean {
         typeof value.meaning === 'string' &&
         typeof value.furigana === 'string' &&
         typeof value.romaji === 'string' &&
+        (value.kanjiReadings === undefined ||
+            (Array.isArray(value.kanjiReadings) &&
+                value.kanjiReadings.every((reading) => typeof reading === 'string'))) &&
+        (value.kanjiMeanings === undefined ||
+            (Array.isArray(value.kanjiMeanings) &&
+                value.kanjiMeanings.every((meaning) => typeof meaning === 'string'))) &&
         isJlptLevel(value.level) &&
         (value.contentId === undefined ||
             (typeof value.contentId === 'string' && value.contentId !== ''))

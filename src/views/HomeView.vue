@@ -30,7 +30,13 @@ const levels = [
 const hasApiError = computed(() => testSession.state.error !== null)
 const isKanaExercise = computed(() => exerciseType.value === 'kana')
 const isKanjiExercise = computed(() => exerciseType.value === 'kanji')
-const displayedLevels = computed(() => (isKanjiExercise.value ? levels.slice(0, 2) : levels))
+const displayedLevels = computed(() => levels)
+const untranslatedKanjiLevels = computed(() =>
+    selectedKanjiLevels.value
+        .filter((level) => level <= 3)
+        .sort((left, right) => right - left)
+        .map((level) => `N${level}`),
+)
 const selectedContentLevels = computed({
     get: () => (isKanjiExercise.value ? selectedKanjiLevels.value : selectedLevels.value),
     set: (value: JlptLevel[]) => {
@@ -240,6 +246,18 @@ function backToSetup(): void {
                             </label>
                         </div>
                     </fieldset>
+
+                    <p
+                        v-if="isKanjiExercise && untranslatedKanjiLevels.length > 0"
+                        class="message message-info kanji-translation-notice"
+                        role="status"
+                    >
+                        {{
+                            t('kanjiSpanishUnavailable', {
+                                levels: untranslatedKanjiLevels.join(', '),
+                            })
+                        }}
+                    </p>
 
                     <label v-if="isKanjiExercise" class="field">
                         <span>{{ t('exerciseType') }}</span>

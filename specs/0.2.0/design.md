@@ -106,8 +106,14 @@ plataforma.
 
 ## Ejercicios locales de kanji
 
-- `services/kanji.ts` filtra el catálogo local de palabras por los niveles N5 y
-  N4 y requiere que la palabra contenga un carácter Han.
+- `services/kanji.ts` carga los archivos `public/data/jlpt-kanji/n1.json` a
+  `n5.json`; no carga `extra.json`.
+- La lectura y el significado de cada carácter se eligen entre sus variantes.
+  El generador excluye todas las variantes válidas de la pregunta al formar
+  distractores para mantener una respuesta válida única.
+- N1–N3 ignoran `meanings_es` de origen y muestran los significados en inglés;
+  la configuración lo comunica al seleccionar esos niveles. N4–N5 usan las
+  traducciones españolas disponibles.
 - La selección de preguntas y los distractores son aleatorios. Lecturas y
   significados repetidos se deduplican para conservar cuatro opciones distintas.
 - En cada avance se priorizan como distractores las opciones elegidas
@@ -117,6 +123,7 @@ plataforma.
 - Las opciones se guardan dentro de la sesión activa para que al reanudar no
   cambien las respuestas mostradas.
 - El ejercicio usa el catálogo estático local y no invoca la API de plataforma.
+- La atribución CC BY del conjunto fuente se incluye junto a los archivos.
 
 ## Planes y límites
 
