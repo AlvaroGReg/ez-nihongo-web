@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { locale, setLocale, t } from '@/i18n'
-import { auth } from '@/stores/auth'
 import { theme, toggleTheme } from '@/stores/theme'
 
 function changeLocale(value: string): void {
@@ -11,20 +10,6 @@ function changeLocale(value: string): void {
 <template>
     <header class="app-toolbar">
         <nav class="toolbar-actions" :aria-label="t('toolbar')">
-            <div class="toolbar-account" aria-live="polite">
-                <template v-if="auth.state.user">
-                    <span class="toolbar-account-label">
-                        {{ t('signedInAs', { email: auth.state.user.email }) }}
-                    </span>
-                    <button class="button button-quiet toolbar-button" type="button" @click="auth.signOut">
-                        {{ t('signOut') }}
-                    </button>
-                </template>
-                <RouterLink v-else class="button button-secondary toolbar-button" to="/auth">
-                    {{ t('loginOrRegister') }}
-                </RouterLink>
-            </div>
-
             <label class="toolbar-language">
                 <span class="visually-hidden">{{ t('language') }}</span>
                 <select

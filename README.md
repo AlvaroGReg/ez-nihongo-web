@@ -35,3 +35,8 @@ start the complete workspace with `deploy.ps1`.
 
 The app keeps the `/ez-nihongo/` base path for GitHub Pages builds. The
 workspace Docker build overrides it to `/` for the combined web/API stack.
+
+The `demo-github-pages-offline` branch deploys to GitHub Pages on every push.
+To enable its first deployment, set the repository's Pages source to **GitHub
+Actions** in **Settings → Pages**. The demo toolbar omits account controls and
+the vocabulary exercises use the bundled catalog without requiring the API.
