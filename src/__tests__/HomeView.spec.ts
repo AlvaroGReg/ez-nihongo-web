@@ -14,6 +14,7 @@ describe('HomeView', () => {
 
         expect(wrapper.text()).toContain('Empezar test')
         expect(wrapper.text()).toContain('Niveles JLPT')
+        expect(wrapper.text()).not.toContain('Iniciar sesión o crear cuenta')
         setLocale('en')
     })
 
@@ -29,5 +30,6 @@ describe('HomeView', () => {
             step: '10',
         })
         expect(wrapper.text()).toContain('Start test')
+        expect(wrapper.text()).not.toContain('Log in or create account')
     })
 })

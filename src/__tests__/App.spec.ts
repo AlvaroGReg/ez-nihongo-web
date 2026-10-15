@@ -13,5 +13,9 @@ describe('App', () => {
             },
         })
         expect(wrapper.find('router-view-stub').exists()).toBe(true)
+        expect(wrapper.get('nav').attributes('aria-label')).toBe('Application toolbar')
+        expect(wrapper.text()).toContain('Log in or create account')
+        expect(wrapper.find('select').element).toBeDefined()
+        expect(wrapper.find('button[aria-label="Switch to dark theme"]').element).toBeDefined()
     })
 })

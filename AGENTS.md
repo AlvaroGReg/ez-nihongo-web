@@ -8,6 +8,13 @@ Estas reglas complementan el contexto común de `../AGENTS.md`.
 - Las especificaciones propias de este repositorio viven en `specs/<version>/`.
 - Mantén los cambios pequeños y respeta la estructura existente.
 
+## Estilos CSS
+
+- Preferimos la anidación CSS nativa para agrupar reglas relacionadas.
+- Como guía flexible, procura no superar tres niveles de profundidad. Un cuarto
+  nivel es aceptable, pero evítalo si no reduce repetición ni hace el código más
+  conciso.
+
 ## Flujo de trabajo
 
 - Instala dependencias con `npm install` si faltan.

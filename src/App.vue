@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 
-import { locale, setLocale, t } from '@/i18n'
-import { theme, toggleTheme } from '@/stores/theme'
+import AppToolbar from '@/components/AppToolbar.vue'
+import { t } from '@/i18n'
 import { testSession } from '@/stores/testSession'
 
 const router = useRouter()
@@ -17,33 +17,10 @@ function abandon(): void {
     void router.push('/')
 }
 
-function changeLocale(value: string): void {
-    if (value === 'en' || value === 'es') setLocale(value)
-}
 </script>
 
 <template>
-    <div class="language-picker app-language-picker">
-        <button
-            class="theme-toggle"
-            type="button"
-            :aria-label="theme === 'light' ? t('switchToDarkTheme') : t('switchToLightTheme')"
-            @click="toggleTheme"
-        >
-            {{ theme === 'light' ? '🌙' : '☀️' }}
-        </button>
-        <label class="field" for="locale-select">
-            <span>{{ t('language') }}</span>
-            <select
-                id="locale-select"
-                :value="locale"
-                @change="changeLocale(($event.target as HTMLSelectElement).value)"
-            >
-                <option value="en">{{ t('english') }}</option>
-                <option value="es">{{ t('spanish') }}</option>
-            </select>
-        </label>
-    </div>
+    <AppToolbar />
     <RouterView />
 
     <div v-if="testSession.state.needsResume" class="modal-backdrop" role="presentation">

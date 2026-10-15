@@ -1,4 +1,7 @@
 :root {
+    --content-max-width: 1200px;
+    --header-height: 90px;
+
     color: var(--text);
     background: var(--page-background);
     color-scheme: light;
@@ -63,68 +66,110 @@
 * {
     box-sizing: border-box;
 }
+
 body {
     margin: 0;
     min-width: 320px;
 }
+
 button,
 input,
 select {
     font: inherit;
 }
+
 button {
     cursor: pointer;
 }
+
 button:disabled {
     cursor: wait;
     opacity: 0.65;
 }
 
 .page-shell {
-    width: min(100% - 2rem, 720px);
+    width: min(100% - 2rem, var(--content-max-width));
     margin: 0 auto;
     padding: 3rem 0;
 }
-.app-language-picker {
-    position: fixed;
+
+.app-toolbar {
+    position: relative;
     z-index: 2;
-    top: 1rem;
-    right: 1rem;
-    display: flex;
-    align-items: flex-end;
-    gap: 0.5rem;
-}
-.app-language-picker .field {
-    width: 8rem;
-    padding: 0.5rem;
-    border: 1px solid var(--border);
-    border-radius: 0.7rem;
+    width: 100%;
+    padding: 0.75rem max(1rem, calc((100% - var(--content-max-width)) / 2));
+    border-bottom: 1px solid var(--border);
     background: var(--surface);
-    box-shadow: 0 0.5rem 1.5rem rgb(33 49 77 / 8%);
-    font-size: 0.75rem;
 }
-.theme-toggle {
-    width: 2.5rem;
-    height: 2.5rem;
+
+.toolbar-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+.toolbar-account {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-right: auto;
+    color: var(--muted);
+    font-size: 0.85rem;
+}
+
+.toolbar-account-label {
+    overflow: hidden;
+    max-width: min(32vw, 18rem);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.toolbar-button {
+    white-space: nowrap;
+}
+
+.toolbar-language select {
+    min-width: 7rem;
+    padding: 0.55rem 0.7rem;
     border: 1px solid var(--border);
     border-radius: 0.7rem;
     background: var(--surface);
     color: var(--text);
-    box-shadow: 0 0.5rem 1.5rem rgb(33 49 77 / 8%);
+    font-size: 0.85rem;
 }
-.app-language-picker select {
-    padding: 0.35rem 0.45rem;
+
+.theme-toggle {
+    width: 2.65rem;
+    height: 2.65rem;
+    border: 1px solid var(--border);
+    border-radius: 0.7rem;
+    background: var(--surface);
+    color: var(--text);
+    font-size: 1rem;
 }
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+}
+
 .setup-page,
 .result-page {
-    min-height: 100vh;
+    min-height: calc(100vh - 3.4rem);
     display: grid;
     place-items: center;
 }
+
 .hero-card,
 .question-card,
 .result-card {
     width: 100%;
+    max-width: 720px;
     padding: clamp(1.5rem, 5vw, 3rem);
     background: var(--surface);
     border: 1px solid var(--border);
@@ -140,44 +185,43 @@ button:disabled {
     letter-spacing: 0.12em;
     text-transform: uppercase;
 }
+
 h1,
 h2,
 p {
     margin-top: 0;
 }
+
 h1 {
     margin-bottom: 1rem;
     font-size: clamp(2.2rem, 8vw, 4rem);
     line-height: 1;
 }
+
 h2 {
     font-size: 1.4rem;
 }
+
 .hero-copy {
     max-width: 36rem;
     color: var(--muted);
     font-size: 1.1rem;
     line-height: 1.6;
 }
-.account-row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--muted);
-    font-size: 0.9rem;
-}
+
 .setup-form,
 .answer-form {
     display: grid;
     gap: 1.25rem;
     margin-top: 2rem;
 }
+
 .form-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1rem;
 }
+
 .field {
     display: grid;
     gap: 0.45rem;
@@ -185,6 +229,7 @@ h2 {
     font-size: 0.9rem;
     font-weight: 700;
 }
+
 select,
 input {
     width: 100%;
@@ -194,20 +239,24 @@ input {
     background: var(--surface);
     color: var(--field-text);
 }
+
 fieldset {
     min-width: 0;
     margin: 0;
     padding: 0;
     border: 0;
 }
+
 legend {
     padding: 0;
 }
+
 .level-options {
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 0.5rem;
 }
+
 .check-option {
     display: grid;
     justify-items: center;
@@ -223,31 +272,37 @@ legend {
         background 120ms ease,
         color 120ms ease;
 }
+
 .check-option:has(input:checked) {
     border-color: #5167c7;
     background: var(--selected-background);
     color: var(--selected-text);
 }
+
 .check-option input {
     width: 1rem;
     height: 1rem;
     margin: 0;
     accent-color: #5167c7;
 }
+
 .check-option:focus-within {
     outline: 3px solid rgb(81 103 199 / 28%);
     outline-offset: 2px;
 }
+
 .range-label,
 .range-limits {
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
+
 .range-label output {
     color: #5167c7;
     font-size: 1.05rem;
 }
+
 .range-input {
     width: 100%;
     padding: 0;
@@ -255,14 +310,17 @@ legend {
     accent-color: #5167c7;
     cursor: grab;
 }
+
 .range-input:active {
     cursor: grabbing;
 }
+
 .range-limits {
     color: var(--subtle);
     font-size: 0.8rem;
     font-weight: 600;
 }
+
 select:focus,
 input:focus,
 button:focus-visible {
@@ -270,6 +328,7 @@ button:focus-visible {
     outline-offset: 2px;
     border-color: #5167c7;
 }
+
 .button {
     border: 0;
     border-radius: 0.7rem;
@@ -279,56 +338,70 @@ button:focus-visible {
         transform 120ms ease,
         opacity 120ms ease;
 }
+
 .button:hover:not(:disabled) {
     transform: translateY(-1px);
 }
+
 .button-primary {
     background: #5167c7;
     color: #fff;
 }
+
 .button-secondary {
     background: var(--secondary-background);
     color: var(--secondary-text);
 }
+
 .button-quiet {
     background: transparent;
     color: #5167c7;
     padding-inline: 0;
 }
+
 .button-wide {
     width: 100%;
 }
+
 .button-row {
     display: flex;
     gap: 0.75rem;
 }
+
 .button-row .button {
     flex: 1;
 }
+
 .error-panel {
     display: grid;
     gap: 0.75rem;
 }
+
 .message {
     padding: 0.8rem 1rem;
     border-radius: 0.7rem;
     line-height: 1.45;
 }
+
 .message-error {
     background: var(--error-background);
     color: var(--error-text);
 }
+
 .message-info {
     background: var(--selected-background);
     color: var(--selected-text);
 }
+
 .message-success {
     background: var(--success-background);
     color: var(--success-text);
 }
+
 .test-page {
     min-height: 100vh;
 }
+
 .test-header {
     display: flex;
     align-items: center;
@@ -336,35 +409,42 @@ button:focus-visible {
     gap: 1rem;
     margin-bottom: 1rem;
 }
+
 .progress-label {
     margin: 0;
     color: var(--muted);
     font-weight: 700;
 }
+
 .question-card {
     margin-top: 1.5rem;
     text-align: center;
 }
+
 .question-index {
     color: var(--subtle);
     font-size: 0.85rem;
     font-weight: 700;
 }
+
 .japanese-word {
     margin: 1.5rem 0 0.25rem;
     font-size: clamp(3rem, 14vw, 7rem);
     font-weight: 700;
 }
+
 .furigana {
     margin-bottom: 2rem;
     color: var(--muted);
     font-size: clamp(1.4rem, 5vw, 2rem);
 }
+
 .answer-form {
     max-width: 28rem;
     margin-inline: auto;
     text-align: left;
 }
+
 .feedback {
     display: grid;
     gap: 0.7rem;
@@ -376,47 +456,58 @@ button:focus-visible {
     background: var(--feedback-background);
     text-align: left;
 }
+
 .feedback-correct {
     border-color: var(--feedback-correct-border);
     background: var(--feedback-correct-background);
 }
+
 .feedback p {
     margin: 0;
 }
+
 .feedback-title {
     font-size: 1.3rem;
     font-weight: 800;
 }
+
 .feedback .button {
     margin-top: 0.5rem;
 }
+
 .result-card {
     text-align: center;
 }
+
 .score {
     display: grid;
     gap: 0.25rem;
     margin: 2rem 0;
 }
+
 .score strong {
     font-size: 3.5rem;
     line-height: 1;
 }
+
 .score span {
     color: #5167c7;
     font-size: 1.4rem;
     font-weight: 800;
 }
+
 .mistakes {
     margin: 2rem 0;
     text-align: left;
 }
+
 .mistake-list {
     display: grid;
     gap: 0.75rem;
     padding: 0;
     list-style: none;
 }
+
 .mistake-list li {
     display: grid;
     gap: 0.2rem;
@@ -424,10 +515,12 @@ button:focus-visible {
     border: 1px solid var(--border);
     border-radius: 0.7rem;
 }
+
 .mistake-list span {
     color: var(--muted);
     font-size: 0.9rem;
 }
+
 .modal-backdrop {
     position: fixed;
     inset: 0;
@@ -437,6 +530,7 @@ button:focus-visible {
     padding: 1rem;
     background: rgb(24 32 42 / 55%);
 }
+
 .modal {
     width: min(100%, 440px);
     padding: 2rem;
@@ -444,21 +538,43 @@ button:focus-visible {
     background: var(--surface);
     box-shadow: 0 1.5rem 4rem rgb(0 0 0 / 25%);
 }
+
 .modal p:not(.eyebrow) {
     color: var(--muted);
     line-height: 1.5;
 }
 
 @media (max-width: 560px) {
+    .app-toolbar {
+        padding-inline: 0.75rem;
+    }
+
+    .toolbar-actions {
+        gap: 0.5rem;
+    }
+
+    .toolbar-account-label {
+        max-width: 28vw;
+    }
+
+    .toolbar-language select {
+        min-width: 5.25rem;
+        max-width: 6rem;
+        padding-inline: 0.4rem;
+    }
+
     .level-options {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
+
     .form-grid {
         grid-template-columns: 1fr;
     }
+
     .test-header {
         align-items: flex-start;
     }
+
     .page-shell {
         padding: 1.5rem 0;
     }
