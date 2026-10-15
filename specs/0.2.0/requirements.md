@@ -63,13 +63,20 @@ estado premium enviado por el cliente.
 **REQ-12:** La demo y los límites de uso deben poder configurarse fuera de la
 lógica de validación del ejercicio.
 
+**REQ-13:** Si el estudiante está autenticado, los ejercicios de vocabulario
+JLPT deben cargar preguntas e identidades de contenido desde la API de
+plataforma. Un error de API debe mostrarse como error recuperable y no debe
+provocar un fallback al catálogo local. Los usuarios no autenticados pueden
+seguir usando el catálogo local.
+
 ## Fuera de alcance
 
 - Supabase/Auth, CMS, Stripe y webhooks.
 - Persistencia remota o sincronización entre dispositivos.
 - Catálogo completo de kana, kanji o gramática.
 - SRS, cola de repasos y analítica de usuario.
-- IA, comunidad, móvil y modo offline.
+- IA, comunidad, móvil y modo offline completo de la aplicación (shell y
+  recursos disponibles sin haber cargado previamente el cliente).
 - Cambios visuales importantes no necesarios para seleccionar idioma.
 
 ## Escenarios verificables
@@ -114,4 +121,13 @@ Scenario: proveedor con significado inglés
   Then the word has a stable local content key
   And its meaning is available as English
   And no Spanish value is fabricated at runtime
+```
+
+```gherkin
+Scenario: ejercicio de vocabulario con sesión autenticada
+  Given el estudiante tiene una sesión autenticada
+  When inicia un ejercicio de vocabulario JLPT
+  Then las preguntas y sus identificadores estables se cargan desde la API
+  And las peticiones incluyen la credencial de la sesión
+  And un error de API no carga preguntas del catálogo local
 ```

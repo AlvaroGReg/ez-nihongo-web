@@ -51,12 +51,21 @@ function changeLocale(value: string): void {
 
 <style lang="scss">
 .app-toolbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
     height: var(--header-height);
     padding: 20px;
+    position: relative;
+    width: 100%;
+    z-index: 2;
 
     .toolbar-actions {
         margin-inline: auto;
         max-width: var(--content-max-width);
+    }
+
+    @media (width <= 560px) {
+        padding-inline: 0.75rem;
     }
 }
 </style>

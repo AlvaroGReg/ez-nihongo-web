@@ -96,9 +96,13 @@ interface ContentProvider {
 }
 ```
 
-El proveedor actual seguirá implementando esta interfaz. La futura fuente
-estática/CMS podrá implementar el mismo puerto. 0.2.0 no copia la base externa
-ni crea un catálogo completo.
+El proveedor de vocabulario implementa esta interfaz con dos fuentes: la API
+de plataforma cuando existe una sesión autenticada y el catálogo JSON local
+para usuarios anónimos. Las peticiones autenticadas usan el token de acceso y
+conservan el `contentId` estable devuelto por la API. Los errores de API son
+recuperables y no cambian silenciosamente a una fuente local, evitando
+registrar actividad autenticada sobre contenido distinto al que sirve la
+plataforma.
 
 ## Planes y límites
 

@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import catalog from '../../public/data/jlpt-vocabulary.json'
+import { auth } from '@/stores/auth'
 import {
     ACTIVE_SESSION_KEY,
     HISTORY_KEY,
@@ -34,6 +36,8 @@ describe('test session store', () => {
         })
         window.localStorage.clear()
         vi.restoreAllMocks()
+        vi.unstubAllGlobals()
+        auth.signOut()
     })
 
     it('persists answers and resumes a saved session', async () => {
@@ -69,6 +73,18 @@ describe('test session store', () => {
         expect(load).not.toHaveBeenCalled()
         expect(store.submitAnswer(question.romaji)).toBe(true)
         expect(store.state.activeSession?.pendingFeedback?.isCorrect).toBe(true)
+    })
+
+    it('starts a vocabulary session from the local catalog without calling the API', async () => {
+        const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(Response.json(catalog))
+        vi.stubGlobal('fetch', fetchMock)
+        const store = createTestSessionStore()
+
+        expect(await store.startTest(config)).toBe(true)
+        expect(store.state.activeSession?.questions).toHaveLength(2)
+        expect(fetchMock).toHaveBeenCalledTimes(1)
+        expect(fetchMock.mock.calls[0]?.[0]).toContain('/data/jlpt-vocabulary.json')
+        expect(fetchMock.mock.calls[0]?.[0]).not.toContain('/api/')
     })
 
     it('abandons without creating a partial history entry', async () => {

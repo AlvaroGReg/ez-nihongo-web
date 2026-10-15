@@ -93,15 +93,6 @@ button:disabled {
     padding: 3rem 0;
 }
 
-.app-toolbar {
-    position: relative;
-    z-index: 2;
-    width: 100%;
-    padding: 0.75rem max(1rem, calc((100% - var(--content-max-width)) / 2));
-    border-bottom: 1px solid var(--border);
-    background: var(--surface);
-}
-
 .toolbar-actions {
     display: flex;
     align-items: center;
@@ -160,7 +151,6 @@ button:disabled {
 
 .setup-page,
 .result-page {
-    min-height: calc(100vh - 3.4rem);
     display: grid;
     place-items: center;
 }
@@ -397,11 +387,6 @@ button:focus-visible {
     background: var(--success-background);
     color: var(--success-text);
 }
-
-.test-page {
-    min-height: 100vh;
-}
-
 .test-header {
     display: flex;
     align-items: center;
@@ -414,11 +399,6 @@ button:focus-visible {
     margin: 0;
     color: var(--muted);
     font-weight: 700;
-}
-
-.question-card {
-    margin-top: 1.5rem;
-    text-align: center;
 }
 
 .question-index {
@@ -545,9 +525,6 @@ button:focus-visible {
 }
 
 @media (max-width: 560px) {
-    .app-toolbar {
-        padding-inline: 0.75rem;
-    }
 
     .toolbar-actions {
         gap: 0.5rem;

@@ -1,6 +1,6 @@
 import { computed, reactive, type ComputedRef } from 'vue'
 
-import { VocabularyApiError, vocabularyApiProvider } from '@/services/api'
+import { VocabularyContentError, localVocabularyProvider } from '@/services/vocabulary'
 import { locale } from '@/i18n'
 import { createReadingExercise, createVocabularyContentId } from '@/services/content'
 import type { ContentProvider, LoadQuestions } from '@/services/contentProvider'
@@ -59,7 +59,7 @@ function createId(prefix: string): string {
 }
 
 export function createTestSessionStore(
-    provider: ContentProvider | LoadQuestions = vocabularyApiProvider,
+    provider: ContentProvider | LoadQuestions = localVocabularyProvider,
 ): TestSessionStore {
     const load = typeof provider === 'function' ? provider : provider.loadQuestions
     const state = reactive({
@@ -121,7 +121,7 @@ export function createTestSessionStore(
             return true
         } catch (error) {
             state.activeSession = null
-            state.error = error instanceof VocabularyApiError ? error.code : 'providerUnknownError'
+            state.error = error instanceof VocabularyContentError ? error.code : 'providerUnknownError'
             return false
         } finally {
             state.isLoading = false
