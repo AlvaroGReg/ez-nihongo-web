@@ -15,14 +15,14 @@ const isKana = computed(() => testSession.state.activeSession?.contentType === '
 const promptLabel = computed(() => {
     const direction = testSession.state.activeSession?.config.kanaDirection ?? 'hiragana-to-romaji'
     const labels: Record<string, string> = {
-        'hiragana-to-romaji': 'hiraganaToRomaji',
-        'katakana-to-romaji': 'katakanaToRomaji',
-        'romaji-to-hiragana': 'romajiToHiragana',
-        'romaji-to-katakana': 'romajiToKatakana',
-        'hiragana-to-katakana': 'hiraganaToKatakana',
-        'katakana-to-hiragana': 'katakanaToHiragana',
+        'hiragana-to-romaji': 'kanaToRomaji',
+        'katakana-to-romaji': 'kanaToRomaji',
+        'romaji-to-hiragana': 'romajiToKana',
+        'romaji-to-katakana': 'romajiToKana',
+        'hiragana-to-katakana': 'kanaConversion',
+        'katakana-to-hiragana': 'kanaConversion',
     }
-    return t(isKana.value ? (labels[direction] ?? 'hiraganaToRomaji') : 'jlptPractice', {
+    return t(isKana.value ? (labels[direction] ?? 'kanaToRomaji') : 'jlptPractice', {
         levels:
             testSession.state.activeSession?.config.levels
                 .map((level) => `N${level}`)

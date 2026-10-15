@@ -89,6 +89,8 @@ export function createTestSessionStore(
                               config.questionCount,
                               config.fullExam ?? false,
                               { rows: config.kanaRows ?? [], types: config.kanaTypes ?? [] },
+                              config.kanaScripts ??
+                                  (config.kanaScript ? [config.kanaScript] : ['hiragana']),
                           ),
                           levelsUsed: [5 as const],
                       }

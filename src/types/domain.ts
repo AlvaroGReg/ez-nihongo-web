@@ -108,6 +108,7 @@ export interface TestConfig {
     questionCount: number
     contentType?: 'vocabulary' | 'kana'
     kanaScript?: KanaScript
+    kanaScripts?: KanaScript[]
     kanaDirection?: KanaDirection
     kanaRows?: KanaRow[]
     kanaTypes?: KanaType[]

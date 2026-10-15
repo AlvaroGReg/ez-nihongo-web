@@ -3,15 +3,16 @@ import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { t } from '@/i18n'
-import { kanaEntries, kanaRowIds, kanaTypes, selectKanaEntries } from '@/services/kana'
+import { kanaEntries, kanaTypes, selectKanaEntries } from '@/services/kana'
 import { testSession } from '@/stores/testSession'
 import type { KanaDirection, KanaRow, KanaScript, KanaType, JlptLevel } from '@/types/domain'
 
 const router = useRouter()
 const selectedLevels = ref<JlptLevel[]>([5])
 const questionCount = ref(10)
-const exerciseType = ref<'vocabulary' | KanaScript>('vocabulary')
+const exerciseType = ref<'vocabulary' | 'kana'>('vocabulary')
 const kanaDirection = ref<KanaDirection>('hiragana-to-romaji')
+const selectedKanaScripts = ref<KanaScript[]>(['hiragana'])
 const selectedKanaRows = ref<KanaRow[]>([])
 const selectedKanaTypes = ref<KanaType[]>([])
 const fullExam = ref(false)
@@ -27,21 +28,33 @@ const levels = [
 const hasApiError = computed(() => testSession.state.error !== null)
 const isKanaExercise = computed(() => exerciseType.value !== 'vocabulary')
 const selectedKanaEntries = computed(() =>
-    selectKanaEntries({ rows: selectedKanaRows.value, types: selectedKanaTypes.value }),
+    selectKanaEntries({ rows: selectedKanaRows.value, types: selectedKanaTypes.value }).flatMap(
+        (entry) => selectedKanaScripts.value.map((script) => ({ entry, script })),
+    ),
 )
-const hasExplicitAllKanaSelection = computed(
-    () =>
-        selectedKanaEntries.value.length === kanaEntries.length &&
-        (selectedKanaRows.value.length > 0 || selectedKanaTypes.value.length > 0),
-)
-
 function selectAllKana(): void {
     selectedKanaRows.value = []
     selectedKanaTypes.value = [...kanaTypes]
+    selectedKanaScripts.value = ['hiragana', 'katakana']
+}
+
+function toggleKanaScript(script: KanaScript): void {
+    selectedKanaScripts.value = selectedKanaScripts.value.includes(script)
+        ? selectedKanaScripts.value.filter((item) => item !== script)
+        : [...selectedKanaScripts.value, script]
+    if (selectedKanaScripts.value.length === 0) selectedKanaScripts.value = [script]
+}
+
+function kanaRowLabel(row: KanaRow): string {
+    const entry = kanaEntries.find((item) => item.row === row)!
+    const displayScript = selectedKanaScripts.value.includes('hiragana') ? 'hiragana' : 'katakana'
+    return `${entry[displayScript]}/${row}`
 }
 
 function rowsForKanaType(type: KanaType): KanaRow[] {
-    return [...new Set(kanaEntries.filter((entry) => entry.type === type).map((entry) => entry.row))]
+    return [
+        ...new Set(kanaEntries.filter((entry) => entry.type === type).map((entry) => entry.row)),
+    ]
 }
 
 function kanaTypeForRow(row: KanaRow): KanaType {
@@ -62,8 +75,7 @@ function isKanaRowSelected(row: KanaRow): boolean {
     )
 }
 
-function toggleKanaType(type: KanaType, event: Event): void {
-    const selected = (event.target as HTMLInputElement).checked
+function toggleKanaType(type: KanaType, selected: boolean): void {
     const rows = rowsForKanaType(type)
     selectedKanaRows.value = selectedKanaRows.value.filter((row) => !rows.includes(row))
     selectedKanaTypes.value = selected
@@ -71,8 +83,7 @@ function toggleKanaType(type: KanaType, event: Event): void {
         : selectedKanaTypes.value.filter((item) => item !== type)
 }
 
-function toggleKanaRow(row: KanaRow, event: Event): void {
-    const selected = (event.target as HTMLInputElement).checked
+function toggleKanaRow(row: KanaRow, selected: boolean): void {
     const type = kanaTypeForRow(row)
     if (selectedKanaTypes.value.includes(type)) {
         selectedKanaTypes.value = selectedKanaTypes.value.filter((item) => item !== type)
@@ -88,24 +99,18 @@ function toggleKanaRow(row: KanaRow, event: Event): void {
 }
 
 const directions = computed(() => {
-    const script = exerciseType.value
-    if (script === 'vocabulary') return []
-    return script === 'hiragana'
-        ? [
-              { value: 'hiragana-to-romaji', label: t('hiraganaToRomaji') },
-              { value: 'romaji-to-hiragana', label: t('romajiToHiragana') },
-              { value: 'hiragana-to-katakana', label: t('hiraganaToKatakana') },
-          ]
-        : [
-              { value: 'katakana-to-romaji', label: t('katakanaToRomaji') },
-              { value: 'romaji-to-katakana', label: t('romajiToKatakana') },
-              { value: 'katakana-to-hiragana', label: t('katakanaToHiragana') },
-          ]
+    if (!isKanaExercise.value) return []
+    return [
+        { value: 'hiragana-to-romaji', label: t('kanaToRomaji') },
+        { value: 'romaji-to-hiragana', label: t('romajiToKana') },
+        { value: 'hiragana-to-katakana', label: t('kanaConversion') },
+    ]
 })
-watch([exerciseType, selectedKanaEntries], ([script, entries]) => {
-    if (script === 'hiragana') kanaDirection.value = 'hiragana-to-romaji'
-    if (script === 'katakana') kanaDirection.value = 'katakana-to-romaji'
-    if (script === 'vocabulary') {
+watch([exerciseType, selectedKanaEntries], ([type, entries]) => {
+    if (type === 'kana' && !directions.value.some(({ value }) => value === kanaDirection.value)) {
+        kanaDirection.value = 'hiragana-to-romaji'
+    }
+    if (type === 'vocabulary') {
         fullExam.value = false
         if (questionCount.value < 10) questionCount.value = 10
     } else if (questionCount.value > entries.length) {
@@ -117,8 +122,7 @@ async function startTest(): Promise<void> {
     validationError.value = ''
     testSession.clearError()
 
-    const selectedExercise = exerciseType.value
-    const isKana = selectedExercise !== 'vocabulary'
+    const isKana = isKanaExercise.value
     if (!isKana && selectedLevels.value.length === 0) {
         validationError.value = 'chooseLevelError'
         return
@@ -137,11 +141,12 @@ async function startTest(): Promise<void> {
     if (
         await testSession.startTest({
             levels: isKana ? [5] : [...selectedLevels.value],
-            questionCount: isKana && fullExam.value ? selectedKanaEntries.value.length : questionCount.value,
+            questionCount:
+                isKana && fullExam.value ? selectedKanaEntries.value.length : questionCount.value,
             ...(isKana
                 ? {
                       contentType: 'kana' as const,
-                      kanaScript: selectedExercise as KanaScript,
+                      kanaScripts: [...selectedKanaScripts.value],
                       kanaDirection: kanaDirection.value,
                       kanaRows: selectedKanaRows.value,
                       kanaTypes: selectedKanaTypes.value,
@@ -176,8 +181,7 @@ function backToSetup(): void {
                         <span>{{ t('exerciseType') }}</span>
                         <select v-model="exerciseType">
                             <option value="vocabulary">{{ t('vocabularyExercise') }}</option>
-                            <option value="hiragana">{{ t('hiraganaExercise') }}</option>
-                            <option value="katakana">{{ t('katakanaExercise') }}</option>
+                            <option value="kana">{{ t('kanaExercise') }}</option>
                         </select>
                     </label>
 
@@ -194,6 +198,14 @@ function backToSetup(): void {
                         </select>
                     </label>
 
+                    <p
+                        v-if="kanaDirection === 'hiragana-to-katakana'"
+                        class="kana-direction-help"
+                        role="note"
+                    >
+                        {{ t('kanaConversionHelp') }}
+                    </p>
+
                     <fieldset v-if="exerciseType === 'vocabulary'" class="field level-fieldset">
                         <legend>{{ t('jlptLevels') }}</legend>
                         <div class="level-options">
@@ -209,56 +221,62 @@ function backToSetup(): void {
                     </fieldset>
 
                     <fieldset v-if="isKanaExercise" class="field kana-map-field">
-                        <legend>{{ t('kanaMap') }}</legend>
-                        <p class="kana-map-hint">{{ t('kanaMapHint') }}</p>
+                        <legend>{{ t('kanaPractice') }}</legend>
+                        <div class="kana-script-tabs" role="group" :aria-label="t('kanaScripts')">
+                            <button
+                                v-for="script in ['hiragana', 'katakana'] as const"
+                                :key="script"
+                                class="kana-script-tab"
+                                type="button"
+                                :aria-pressed="selectedKanaScripts.includes(script)"
+                                @click="toggleKanaScript(script)"
+                            >
+                                {{ t(script) }}
+                            </button>
+                        </div>
+                        <button
+                            class="kana-all-button"
+                            type="button"
+                            :aria-pressed="
+                                selectedKanaScripts.length === 2 &&
+                                selectedKanaEntries.length === kanaEntries.length * 2
+                            "
+                            @click="selectAllKana"
+                        >
+                            {{ t('allKana') }}
+                        </button>
                         <p class="kana-map-count">
                             {{ t('kanaSelectedCount', { count: selectedKanaEntries.length }) }}
                         </p>
-                        <button
-                            class="button button-secondary kana-select-all"
-                            type="button"
-                            :disabled="hasExplicitAllKanaSelection"
-                            @click="selectAllKana"
-                        >
-                            {{ t('selectAllKana') }}
-                        </button>
                         <div class="kana-map-filter-groups">
-                            <fieldset class="field kana-filter-group">
-                                <legend>{{ t('kanaRows') }}</legend>
-                                <div class="kana-map-options">
-                                    <label
-                                        v-for="row in kanaRowIds"
+                            <section
+                                v-for="type in kanaTypes"
+                                :key="type"
+                                class="kana-category"
+                                :class="`kana-category-${type}`"
+                            >
+                                <h2>{{ t(type) }}</h2>
+                                <button
+                                    class="kana-choice kana-category-all"
+                                    type="button"
+                                    :aria-pressed="isKanaTypeSelected(type)"
+                                    @click="toggleKanaType(type, !isKanaTypeSelected(type))"
+                                >
+                                    {{ t(`all${type[0]!.toUpperCase()}${type.slice(1)}`) }}
+                                </button>
+                                <div class="kana-category-rows">
+                                    <button
+                                        v-for="row in rowsForKanaType(type)"
                                         :key="row"
-                                        class="check-option kana-option"
+                                        class="kana-choice"
+                                        type="button"
+                                        :aria-pressed="isKanaRowSelected(row)"
+                                        @click="toggleKanaRow(row, !isKanaRowSelected(row))"
                                     >
-                                        <input
-                                            type="checkbox"
-                                            :value="row"
-                                            :checked="isKanaRowSelected(row)"
-                                            @change="toggleKanaRow(row, $event)"
-                                        />
-                                        <span>{{ row }}</span>
-                                    </label>
+                                        {{ kanaRowLabel(row) }}
+                                    </button>
                                 </div>
-                            </fieldset>
-                            <fieldset class="field kana-filter-group">
-                                <legend>{{ t('kanaTypes') }}</legend>
-                                <div class="kana-map-options kana-type-options">
-                                    <label
-                                        v-for="type in kanaTypes"
-                                        :key="type"
-                                        class="check-option kana-option"
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            :value="type"
-                                            :checked="isKanaTypeSelected(type)"
-                                            @change="toggleKanaType(type, $event)"
-                                        />
-                                        <span>{{ t(type) }}</span>
-                                    </label>
-                                </div>
-                            </fieldset>
+                            </section>
                         </div>
                     </fieldset>
 
@@ -323,47 +341,109 @@ function backToSetup(): void {
 
 <style lang="scss">
 .setup-page {
-    min-height: calc(100vw - #{var(--header-height)});
+    width: min(100% - 2rem, 1560px);
+    min-height: calc(100vh - var(--header-height));
+    align-items: start;
+
+    .hero-card {
+        max-width: none;
+    }
 
     .kana-map-field {
         grid-column: 1 / -1;
+        display: grid;
+        gap: 0.9rem;
     }
 
-    .kana-map-hint,
     .kana-map-count {
         margin: 0;
         color: var(--muted);
         font-weight: 400;
     }
 
+    .kana-direction-help {
+        grid-column: 1 / -1;
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.9rem;
+        font-weight: 400;
+        line-height: 1.5;
+    }
+
+    .kana-script-tabs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+    }
+
+    .kana-script-tab,
+    .kana-all-button,
+    .kana-choice {
+        min-height: 3rem;
+        border: 2px solid #5167c7;
+        border-radius: 0;
+        background: transparent;
+        color: #5167c7;
+        font-size: 1.05rem;
+    }
+
+    .kana-script-tab[aria-pressed='true'],
+    .kana-choice[aria-pressed='true'] {
+        background: #5167c7;
+        color: white;
+    }
+
+    .kana-all-button {
+        width: 100%;
+    }
+
     .kana-map-filter-groups {
         display: grid;
-        grid-template-columns: minmax(0, 2fr) minmax(10rem, 1fr);
+        grid-template-columns: 1fr 1fr 1fr;
         gap: 1rem;
+        margin-top: 1.5rem;
     }
 
-    .kana-filter-group {
-        gap: 0.6rem;
-    }
-
-    .kana-map-options {
+    .kana-category {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(3.5rem, 1fr));
-        gap: 0.5rem;
+        align-content: start;
+        gap: 0.7rem;
+
+        h2 {
+            margin: 0 0 0.35rem;
+            color: #5167c7;
+            text-align: center;
+        }
     }
 
-    .kana-type-options {
-        grid-template-columns: 1fr;
+    .kana-category-rows {
+        display: grid;
+        gap: 0.65rem;
     }
 
-    .kana-option {
-        padding: 0.55rem 0.35rem;
+    .kana-category-gojuon .kana-category-rows {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .kana-category-yoon .kana-category-rows {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .kana-category-all {
+        font-weight: 700;
     }
 }
 
 @media (max-width: 600px) {
     .setup-page .kana-map-filter-groups {
         grid-template-columns: 1fr;
+    }
+
+    .setup-page .kana-script-tab,
+    .setup-page .kana-all-button,
+    .setup-page .kana-choice {
+        min-height: 2.65rem;
+        font-size: 0.9rem;
     }
 }
 </style>

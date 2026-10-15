@@ -33,17 +33,19 @@ describe('HomeView', () => {
         expect(wrapper.text()).not.toContain('Log in or create account')
     })
 
-    it('offers kana direction selectors and disables the count for a complete exam', async () => {
+    it('offers a combined kana exercise and disables the count for a complete exam', async () => {
         const wrapper = mount(HomeView, {
             global: { plugins: [router] },
         })
 
-        await wrapper.get('select').setValue('hiragana')
-        expect(wrapper.text()).toContain('Hiragana to romaji')
+        await wrapper.get('select').setValue('kana')
+        expect(wrapper.text()).toContain('Kana to romaji')
         expect(wrapper.findAll('select')).toHaveLength(2)
 
-        await wrapper.get('.kana-map-options input[value="ka"]').setValue(true)
-        await wrapper.get('.kana-type-options input[value="yoon"]').setValue(true)
+        await wrapper
+            .get('.kana-category-gojuon .kana-choice:not(.kana-category-all)')
+            .trigger('click')
+        await wrapper.get('.kana-category-yoon .kana-category-all').trigger('click')
         expect(wrapper.text()).toContain('38 kana selected')
 
         await wrapper.get('.full-exam-option input').setValue(true)
@@ -51,54 +53,94 @@ describe('HomeView', () => {
         expect(wrapper.text()).toContain('38')
     })
 
-    it('selects every gojuon row and clears the type when one row is deselected', async () => {
+    it('explains the conversion exercise and how kana selections work', async () => {
         const wrapper = mount(HomeView, {
             global: { plugins: [router] },
         })
 
-        await wrapper.get('select').setValue('hiragana')
-        const gojuon = wrapper.get('.kana-type-options input[value="gojuon"]')
-        await gojuon.setValue(true)
+        await wrapper.get('select').setValue('kana')
+        const selects = wrapper.findAll('select')
+        await selects[1]!.setValue('hiragana-to-katakana')
 
-        const gojuonRowIds = ['a', 'ka', 'sa', 'ta', 'na', 'ha', 'ma', 'ya', 'ra', 'wa', 'n']
-        const gojuonRows = wrapper
-            .findAll('.kana-map-options:not(.kana-type-options) input')
-            .filter((input) => gojuonRowIds.includes(input.attributes('value') ?? ''))
+        expect(wrapper.get('.kana-direction-help').text()).toContain(
+            'write its equivalent in the other',
+        )
+        expect(wrapper.get('.kana-direction-help').text()).toContain(
+            'these selections are combined',
+        )
+    })
+
+    it('selects every main kana row and clears the category when one row is deselected', async () => {
+        const wrapper = mount(HomeView, {
+            global: { plugins: [router] },
+        })
+
+        await wrapper.get('select').setValue('kana')
+        const gojuon = wrapper.get('.kana-category-gojuon .kana-category-all')
+        await gojuon.trigger('click')
+
+        const gojuonRows = wrapper.findAll('.kana-category-gojuon .kana-category-rows .kana-choice')
         expect(gojuonRows).toHaveLength(11)
-        expect(gojuonRows.every((input) => (input.element as HTMLInputElement).checked)).toBe(true)
+        expect(gojuonRows.every((button) => button.attributes('aria-pressed') === 'true')).toBe(
+            true,
+        )
         expect(wrapper.text()).toContain('46 kana selected')
 
-        await wrapper.get('.kana-map-options:not(.kana-type-options) input[value="ka"]').setValue(false)
+        await wrapper
+            .findAll('.kana-category-gojuon .kana-choice')
+            .find((button) => button.text().includes('/ka'))!
+            .trigger('click')
 
-        expect((gojuon.element as HTMLInputElement).checked).toBe(false)
-        expect((wrapper.get('.kana-map-options:not(.kana-type-options) input[value="ka"]')
-            .element as HTMLInputElement).checked).toBe(false)
-        expect((wrapper.get('.kana-map-options:not(.kana-type-options) input[value="a"]')
-            .element as HTMLInputElement).checked).toBe(true)
+        expect(gojuon.attributes('aria-pressed')).toBe('false')
+        expect(
+            wrapper
+                .findAll('.kana-category-gojuon .kana-choice')
+                .find((button) => button.text().includes('/ka'))!
+                .attributes('aria-pressed'),
+        ).toBe('false')
+        expect(
+            wrapper
+                .findAll('.kana-category-gojuon .kana-choice')
+                .find((button) => button.text().endsWith('/a'))!
+                .attributes('aria-pressed'),
+        ).toBe('true')
         expect(wrapper.text()).toContain('41 kana selected')
     })
 
-    it('selects every kana row and type from a partial selection', async () => {
+    it('selects both scripts and all kana from a partial selection', async () => {
         const wrapper = mount(HomeView, {
             global: { plugins: [router] },
         })
 
-        await wrapper.get('select').setValue('hiragana')
-        await wrapper.get('.kana-map-options input[value="ka"]').setValue(true)
-        await wrapper.get('.kana-type-options input[value="yoon"]').setValue(true)
-        await wrapper.get('.kana-select-all').trigger('click')
+        await wrapper.get('select').setValue('kana')
+        await wrapper
+            .get('.kana-category-gojuon .kana-choice:not(.kana-category-all)')
+            .trigger('click')
+        await wrapper.get('.kana-category-yoon .kana-category-all').trigger('click')
+        await wrapper.get('.kana-all-button').trigger('click')
 
-        expect(wrapper.text()).toContain('104 kana selected')
-        expect(
-            wrapper
-                .findAll('.kana-map-options:not(.kana-type-options) input')
-                .every((input) => (input.element as HTMLInputElement).checked),
-        ).toBe(true)
-        expect(
-            wrapper
-                .findAll('.kana-type-options input')
-                .every((input) => (input.element as HTMLInputElement).checked),
-        ).toBe(true)
-        expect(wrapper.get('.kana-select-all').element).toHaveProperty('disabled', true)
+        expect(wrapper.text()).toContain('208 kana selected')
+        expect(wrapper.get('.kana-script-tab[aria-pressed="true"]').text()).toContain(
+            'Practice Hiragana',
+        )
+        expect(wrapper.findAll('.kana-script-tab[aria-pressed="true"]')).toHaveLength(2)
+        expect(wrapper.get('.kana-all-button').attributes('aria-pressed')).toBe('true')
+    })
+
+    it('shows katakana row labels when hiragana is not selected', async () => {
+        const wrapper = mount(HomeView, {
+            global: { plugins: [router] },
+        })
+        await wrapper.get('select').setValue('kana')
+        await wrapper
+            .findAll('.kana-script-tab')
+            .find((button) => button.text().includes('Katakana'))!
+            .trigger('click')
+        await wrapper
+            .findAll('.kana-script-tab')
+            .find((button) => button.text().includes('Hiragana'))!
+            .trigger('click')
+
+        expect(wrapper.get('.kana-category-gojuon .kana-category-rows').text()).toContain('ア/a')
     })
 })

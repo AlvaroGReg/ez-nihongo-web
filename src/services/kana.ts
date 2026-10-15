@@ -164,21 +164,23 @@ function romanize(kana: string): string {
     return result
 }
 
-export const kanaEntries: KanaEntry[] = rows.flatMap(({ id, type, hiragana: hiraganaRow, katakana: katakanaRow }) => {
-    const hiragana = hiraganaRow.includes(' ')
-        ? hiraganaRow.split(' ').filter(Boolean)
-        : [...hiraganaRow]
-    const katakana = katakanaRow.includes(' ')
-        ? katakanaRow.split(' ').filter(Boolean)
-        : [...katakanaRow]
-    return hiragana.map((value, index) => ({
-        hiragana: value,
-        katakana: katakana[index] ?? '',
-        romaji: romanize(value),
-        row: id,
-        type,
-    }))
-})
+export const kanaEntries: KanaEntry[] = rows.flatMap(
+    ({ id, type, hiragana: hiraganaRow, katakana: katakanaRow }) => {
+        const hiragana = hiraganaRow.includes(' ')
+            ? hiraganaRow.split(' ').filter(Boolean)
+            : [...hiraganaRow]
+        const katakana = katakanaRow.includes(' ')
+            ? katakanaRow.split(' ').filter(Boolean)
+            : [...katakanaRow]
+        return hiragana.map((value, index) => ({
+            hiragana: value,
+            katakana: katakana[index] ?? '',
+            romaji: romanize(value),
+            row: id,
+            type,
+        }))
+    },
+)
 
 export const kanaRowIds = rows.map(({ id }) => id)
 export const kanaTypes: KanaType[] = ['gojuon', 'dakuon', 'yoon']
@@ -201,27 +203,58 @@ export function createKanaQuestions(
     questionCount: number,
     fullExam: boolean,
     selection: KanaSelection = { rows: [], types: [] },
+    scripts?: KanaScript[],
 ): VocabularyWord[] {
-    const shuffled = [...selectKanaEntries(selection)]
+    const legacyDirection = scripts === undefined
+    const selectedScripts: KanaScript[] = scripts?.length
+        ? scripts
+        : [
+              direction.startsWith('katakana') || direction.endsWith('katakana')
+                  ? 'katakana'
+                  : 'hiragana',
+          ]
+    const fromRomaji = direction.startsWith('romaji-to-')
+    const toRomaji = direction.endsWith('to-romaji')
+    const legacyFrom = direction.slice(0, direction.indexOf('-to-')) as KanaScript | 'romaji'
+    const legacyTo = direction.slice(direction.indexOf('-to-') + 4) as KanaScript | 'romaji'
+    const entries = selectKanaEntries(selection).flatMap((entry) =>
+        selectedScripts.map((script) => {
+            const from: KanaScript | 'romaji' = legacyDirection
+                ? legacyFrom
+                : fromRomaji
+                  ? 'romaji'
+                  : script
+            const to: KanaScript | 'romaji' = legacyDirection
+                ? legacyTo
+                : toRomaji
+                  ? 'romaji'
+                  : fromRomaji
+                    ? script
+                    : script === 'hiragana'
+                      ? 'katakana'
+                      : 'hiragana'
+            return { entry, from, to }
+        }),
+    )
+    const shuffled = [...entries]
     for (let index = shuffled.length - 1; index > 0; index -= 1) {
         const swapIndex = Math.floor(Math.random() * (index + 1))
         const current = shuffled[index]!
         shuffled[index] = shuffled[swapIndex]!
         shuffled[swapIndex] = current
     }
-    return shuffled.slice(0, fullExam ? shuffled.length : questionCount).map((entry) => {
-        const separator = direction.indexOf('-to-')
-        const from = direction.slice(0, separator) as KanaScript | 'romaji'
-        const to = direction.slice(separator + 4) as KanaScript | 'romaji'
-        const prompt = from === 'romaji' ? entry.romaji : entry[from]
-        const expected = to === 'romaji' ? entry.romaji : entry[to]
-        return {
-            contentId: `kana:${entry.hiragana}`,
-            word: prompt,
-            meaning: expected,
-            furigana: '',
-            romaji: expected,
-            level: 5,
-        }
-    })
+    return shuffled
+        .slice(0, fullExam ? shuffled.length : questionCount)
+        .map(({ entry, from, to }) => {
+            const prompt = from === 'romaji' ? entry.romaji : entry[from]
+            const expected = to === 'romaji' ? entry.romaji : entry[to]
+            return {
+                contentId: `kana:${entry.hiragana}`,
+                word: prompt,
+                meaning: expected,
+                furigana: '',
+                romaji: expected,
+                level: 5,
+            }
+        })
 }
