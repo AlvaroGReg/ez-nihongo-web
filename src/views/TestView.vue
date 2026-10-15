@@ -11,6 +11,24 @@ const inputError = ref('')
 const responseInput = ref<HTMLInputElement | null>(null)
 const feedbackPanel = ref<HTMLElement | null>(null)
 const currentQuestion = testSession.currentQuestion
+const isKana = computed(() => testSession.state.activeSession?.contentType === 'kana')
+const promptLabel = computed(() => {
+    const direction = testSession.state.activeSession?.config.kanaDirection ?? 'hiragana-to-romaji'
+    const labels: Record<string, string> = {
+        'hiragana-to-romaji': 'hiraganaToRomaji',
+        'katakana-to-romaji': 'katakanaToRomaji',
+        'romaji-to-hiragana': 'romajiToHiragana',
+        'romaji-to-katakana': 'romajiToKatakana',
+        'hiragana-to-katakana': 'hiraganaToKatakana',
+        'katakana-to-hiragana': 'katakanaToHiragana',
+    }
+    return t(isKana.value ? (labels[direction] ?? 'hiraganaToRomaji') : 'jlptPractice', {
+        levels:
+            testSession.state.activeSession?.config.levels
+                .map((level) => `N${level}`)
+                .join(' + ') ?? '',
+    })
+})
 const hasFallbackLevels = computed(() => {
     const session = testSession.state.activeSession
     return session?.levelsUsed.some((level) => !session.config.levels.includes(level)) ?? false
@@ -27,7 +45,7 @@ function focusFeedback(): void {
 function submitAnswer(): void {
     inputError.value = ''
     if (response.value.trim() === '') {
-        inputError.value = 'enterRomanji'
+        inputError.value = isKana.value ? 'enterAnswer' : 'enterRomanji'
         focusResponse()
         return
     }
@@ -72,13 +90,7 @@ watch(
         <header class="test-header">
             <div>
                 <p class="eyebrow">
-                    {{
-                        t('jlptPractice', {
-                            levels: testSession.state.activeSession.config.levels
-                                .map((level) => `N${level}`)
-                                .join(' + '),
-                        })
-                    }}
+                    {{ promptLabel }}
                 </p>
                 <p class="progress-label">
                     {{ t('question') }} {{ testSession.state.activeSession.currentIndex + 1 }}
@@ -108,7 +120,7 @@ watch(
                 @submit.prevent="submitAnswer"
             >
                 <label class="field" for="romanji-answer">
-                    <span>{{ t('romanjiAnswer') }}</span>
+                    <span>{{ t(isKana ? 'yourAnswer' : 'romanjiAnswer') }}</span>
                     <input
                         id="romanji-answer"
                         ref="responseInput"
@@ -150,12 +162,12 @@ watch(
                     {{ t('yourAnswer') }}:
                     <strong>{{ testSession.state.activeSession.pendingFeedback.response }}</strong>
                 </p>
-                <p>
+                <p v-if="!isKana">
                     {{ t('meaning') }}:
                     <strong>{{ currentQuestion.meaning }}</strong>
                 </p>
-                <p v-if="!testSession.state.activeSession.pendingFeedback.isCorrect">
-                    {{ t('correctRomanji') }}:
+                <p v-if="isKana || !testSession.state.activeSession.pendingFeedback.isCorrect">
+                    {{ t(isKana ? 'correctAnswer' : 'correctRomanji') }}:
                     <strong>{{ testSession.state.activeSession.pendingFeedback.expected }}</strong>
                 </p>
                 <button

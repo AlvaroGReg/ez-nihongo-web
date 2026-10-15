@@ -8,6 +8,44 @@ export type ExerciseType = 'reading' | 'meaning' | 'writing'
 
 export type StudyMode = 'new' | 'review' | 'mistakes' | 'quick'
 
+export type KanaScript = 'hiragana' | 'katakana'
+export type KanaRow =
+    | 'a'
+    | 'ka'
+    | 'sa'
+    | 'ta'
+    | 'na'
+    | 'ha'
+    | 'ma'
+    | 'ya'
+    | 'ra'
+    | 'wa'
+    | 'n'
+    | 'ga'
+    | 'za'
+    | 'da'
+    | 'ba'
+    | 'pa'
+    | 'kya'
+    | 'sha'
+    | 'cha'
+    | 'nya'
+    | 'hya'
+    | 'mya'
+    | 'rya'
+    | 'gya'
+    | 'ja'
+    | 'bya'
+    | 'pya'
+export type KanaType = 'gojuon' | 'dakuon' | 'yoon'
+export type KanaDirection =
+    | 'hiragana-to-romaji'
+    | 'katakana-to-romaji'
+    | 'romaji-to-hiragana'
+    | 'romaji-to-katakana'
+    | 'hiragana-to-katakana'
+    | 'katakana-to-hiragana'
+
 export type Plan = 'demo' | 'free' | 'premium'
 
 export type Capability = 'basic-exercises' | 'advanced-exercises' | 'unlimited-review' | 'offline'
@@ -68,6 +106,12 @@ export interface VocabularyWord {
 export interface TestConfig {
     levels: JlptLevel[]
     questionCount: number
+    contentType?: 'vocabulary' | 'kana'
+    kanaScript?: KanaScript
+    kanaDirection?: KanaDirection
+    kanaRows?: KanaRow[]
+    kanaTypes?: KanaType[]
+    fullExam?: boolean
 }
 
 export interface TestAnswer {

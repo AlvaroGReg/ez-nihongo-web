@@ -128,8 +128,10 @@ function isSession(value: unknown): value is TestSession {
         candidate.createdAt !== '' &&
         typeof candidate.sessionId === 'string' &&
         candidate.sessionId !== '' &&
-        candidate.contentType === 'vocabulary' &&
-        candidate.exerciseType === 'reading' &&
+        (candidate.contentType === 'vocabulary' || candidate.contentType === 'kana') &&
+        (candidate.contentType === 'kana'
+            ? candidate.exerciseType === 'writing'
+            : candidate.exerciseType === 'reading') &&
         candidate.studyMode === 'new' &&
         (candidate.pendingFeedback === null || isTestAnswer(candidate.pendingFeedback)) &&
         (candidate.attempts === undefined ||

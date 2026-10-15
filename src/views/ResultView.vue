@@ -49,7 +49,16 @@ function startAnotherTest(): void {
                             mistake.question.furigana
                         }}</span>
                         <span>{{ t('yourAnswer') }}: {{ mistake.response || t('noAnswer') }}</span>
-                        <span>{{ t('correctRomanji') }}: {{ mistake.expected }}</span>
+                        <span>
+                            {{
+                                t(
+                                    result.config.contentType === 'kana'
+                                        ? 'correctAnswer'
+                                        : 'correctRomanji',
+                                )
+                            }}:
+                            {{ mistake.expected }}
+                        </span>
                     </li>
                 </ul>
             </section>

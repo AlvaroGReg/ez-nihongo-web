@@ -5,6 +5,7 @@ import { locale } from '@/i18n'
 import { createReadingExercise, createVocabularyContentId } from '@/services/content'
 import type { ContentProvider, LoadQuestions } from '@/services/contentProvider'
 import { isRomajiCorrect } from '@/services/romaji'
+import { createKanaQuestions } from '@/services/kana'
 import {
     appendHistory,
     clearActiveSession,
@@ -80,7 +81,18 @@ export function createTestSessionStore(
         state.result = null
 
         try {
-            const loaded = await load(config, locale.value)
+            const loaded =
+                config.contentType === 'kana'
+                    ? {
+                          questions: createKanaQuestions(
+                              config.kanaDirection ?? 'hiragana-to-romaji',
+                              config.questionCount,
+                              config.fullExam ?? false,
+                              { rows: config.kanaRows ?? [], types: config.kanaTypes ?? [] },
+                          ),
+                          levelsUsed: [5 as const],
+                      }
+                    : await load(config, locale.value)
             const questions = loaded.questions.map((question) => ({
                 ...question,
                 contentId:
@@ -97,8 +109,8 @@ export function createTestSessionStore(
                 levelsUsed: loaded.levelsUsed,
                 createdAt: new Date().toISOString(),
                 sessionId: createId('session'),
-                contentType: 'vocabulary',
-                exerciseType: 'reading',
+                contentType: config.contentType ?? 'vocabulary',
+                exerciseType: config.contentType === 'kana' ? 'writing' : 'reading',
                 studyMode: 'new',
                 attempts: [],
             }
@@ -128,7 +140,11 @@ export function createTestSessionStore(
             questionIndex: session.currentIndex,
             response,
             expected: question.romaji,
-            isCorrect: isRomajiCorrect(response, question.romaji, question.furigana),
+            isCorrect:
+                session.config.contentType === 'kana' &&
+                !session.config.kanaDirection?.endsWith('to-romaji')
+                    ? response.trim().normalize('NFC') === question.romaji.normalize('NFC')
+                    : isRomajiCorrect(response, question.romaji, question.furigana),
             eventId,
             contentId,
             exerciseId: exercise.id,

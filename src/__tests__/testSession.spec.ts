@@ -54,6 +54,23 @@ describe('test session store', () => {
         expect(secondStore.state.needsResume).toBe(true)
     })
 
+    it('starts a local kana session and checks the selected conversion', async () => {
+        const load = vi.fn<LoadQuestions>().mockResolvedValue({ questions, levelsUsed: [5] })
+        const store = createTestSessionStore(load)
+        await store.startTest({
+            levels: [5],
+            questionCount: 1,
+            contentType: 'kana',
+            kanaScript: 'hiragana',
+            kanaDirection: 'romaji-to-hiragana',
+        })
+        const question = store.currentQuestion.value!
+
+        expect(load).not.toHaveBeenCalled()
+        expect(store.submitAnswer(question.romaji)).toBe(true)
+        expect(store.state.activeSession?.pendingFeedback?.isCorrect).toBe(true)
+    })
+
     it('abandons without creating a partial history entry', async () => {
         const store = createTestSessionStore(
             vi.fn<LoadQuestions>().mockResolvedValue({ questions, levelsUsed: [5] }),
