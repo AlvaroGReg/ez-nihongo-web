@@ -4,7 +4,15 @@ import { createKanjiAnswerOptions } from '@/services/kanji'
 import type { VocabularyWord } from '@/types/domain'
 
 const entries: VocabularyWord[] = [
-    { word: '猫', meaning: 'cat', furigana: 'ねこ', romaji: 'neko', level: 5 },
+    {
+        word: '猫',
+        meaning: 'cat',
+        furigana: 'ねこ',
+        romaji: 'neko',
+        level: 5,
+        kanjiReadings: ['ねこ', 'びょう'],
+        kanjiMeanings: ['cat', 'feline'],
+    },
     { word: '犬', meaning: 'dog', furigana: 'いぬ', romaji: 'inu', level: 5 },
     { word: '鳥', meaning: 'bird', furigana: 'とり', romaji: 'tori', level: 5 },
     { word: '魚', meaning: 'fish', furigana: 'さかな', romaji: 'sakana', level: 5 },
@@ -18,6 +26,7 @@ describe('kanji answer options', () => {
         expect(options).toHaveLength(4)
         expect(new Set(options).size).toBe(4)
         expect(options.filter((option) => option === 'ねこ')).toHaveLength(1)
+        expect(options).not.toContain('びょう')
     })
 
     it('creates meaning choices and prioritizes an answer missed earlier in the session', () => {
@@ -40,5 +49,6 @@ describe('kanji answer options', () => {
         expect(options).toHaveLength(4)
         expect(new Set(options).size).toBe(4)
         expect(options.filter((option) => option === 'cat')).toHaveLength(1)
+        expect(options).not.toContain('feline')
     })
 })

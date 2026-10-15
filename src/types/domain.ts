@@ -101,6 +101,9 @@ export interface VocabularyWord {
     furigana: string
     romaji: string
     level: JlptLevel
+    /** All valid answer variants for standalone kanji questions. */
+    kanjiReadings?: string[]
+    kanjiMeanings?: string[]
 }
 
 export interface TestConfig {
