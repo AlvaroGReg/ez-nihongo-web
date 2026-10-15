@@ -21,7 +21,7 @@ describe('App', () => {
         expect(wrapper.find('button[aria-label="Switch to dark theme"]').element).toBeDefined()
     })
 
-    it('opens the vertical navigation with exercises and a disabled dictionary', async () => {
+    it('opens the vertical navigation with links to exercises and dictionary', async () => {
         const wrapper = mount(App, {
             global: {
                 plugins: [router],
@@ -33,6 +33,6 @@ describe('App', () => {
 
         expect(wrapper.get('.toolbar-brand').text()).toBe('EZ Nihongo')
         expect(wrapper.get('.navigation-menu a').attributes('href')).toBe('#/exercises')
-        expect(wrapper.get('.dictionary-link').element).toHaveProperty('disabled', true)
+        expect(wrapper.get('.dictionary-link').attributes('href')).toBe('#/dictionary')
     })
 })

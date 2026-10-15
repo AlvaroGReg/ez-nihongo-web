@@ -34,10 +34,9 @@ function closeMenu(): void {
                     <RouterLink to="/exercises" @click="closeMenu">
                         {{ t('exercises') }}
                     </RouterLink>
-                    <button class="dictionary-link" type="button" disabled>
+                    <RouterLink class="dictionary-link" to="/dictionary" @click="closeMenu">
                         {{ t('dictionary') }}
-                        <span>{{ t('comingSoon') }}</span>
-                    </button>
+                    </RouterLink>
                 </nav>
             </div>
 
@@ -205,16 +204,6 @@ function closeMenu(): void {
         a:hover {
             background: var(--secondary-background);
         }
-
-        .dictionary-link:disabled {
-            color: var(--muted);
-            cursor: not-allowed;
-            opacity: 0.75;
-        }
-
-        .dictionary-link span {
-            font-size: 0.7rem;
-        }
     }
 
     @media (width <= 560px) {
@@ -226,6 +215,42 @@ function closeMenu(): void {
 
         .toolbar-brand {
             font-size: 1rem;
+        }
+    }
+
+    @media (width <= 400px) {
+        .toolbar-layout {
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr) auto;
+            gap: 0.5rem;
+        }
+
+        .toolbar-brand {
+            position: static;
+            justify-self: center;
+            min-width: 0;
+            font-size: 0.82rem;
+            transform: none;
+        }
+
+        .toolbar-actions {
+            min-width: 0;
+            gap: 0.25rem;
+        }
+
+        .toolbar-language select {
+            width: 4.25rem;
+            min-width: 0;
+            max-width: 4.25rem;
+            padding-inline: 0.2rem;
+            font-size: 0.75rem;
+        }
+
+        .menu-toggle,
+        .theme-toggle,
+        .account-icon-button {
+            width: 2.35rem;
+            height: 2.35rem;
         }
     }
 }

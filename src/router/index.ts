@@ -3,6 +3,7 @@ import { createRouter, createWebHashHistory } from 'vue-router'
 import ExerciseView from '@/views/ExerciseView.vue'
 import HomeView from '@/views/HomeView.vue'
 import AuthView from '@/views/AuthView.vue'
+import DictionaryView from '@/views/DictionaryView.vue'
 import ResultView from '@/views/ResultView.vue'
 import TestView from '@/views/TestView.vue'
 
@@ -12,6 +13,7 @@ const router = createRouter({
         { path: '/', name: 'home', component: HomeView },
         { path: '/exercises', name: 'exercises', component: ExerciseView },
         { path: '/auth', name: 'auth', component: AuthView },
+        { path: '/dictionary', name: 'dictionary', component: DictionaryView },
         { path: '/test', name: 'test', component: TestView },
         { path: '/result', name: 'result', component: ResultView },
     ],
