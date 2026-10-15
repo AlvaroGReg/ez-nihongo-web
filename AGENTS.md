@@ -10,7 +10,8 @@ Estas reglas complementan el contexto común de `../AGENTS.md`.
 
 ## Estilos CSS
 
-- Preferimos la anidación CSS nativa para agrupar reglas relacionadas.
+- Todo el CSS nuevo o modificado debe seguir el patrón de anidación CSS nativa
+  para agrupar reglas relacionadas y evitar repetir selectores ancestros.
 - Como guía flexible, procura no superar tres niveles de profundidad. Un cuarto
   nivel es aceptable, pero evítalo si no reduce repetición ni hace el código más
   conciso.

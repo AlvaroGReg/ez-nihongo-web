@@ -37,6 +37,9 @@ function closeMenu(): void {
                     <RouterLink class="dictionary-link" to="/dictionary" @click="closeMenu">
                         {{ t('dictionary') }}
                     </RouterLink>
+                    <RouterLink to="/about" @click="closeMenu">
+                        {{ t('about') }}
+                    </RouterLink>
                 </nav>
             </div>
 
