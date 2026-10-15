@@ -128,10 +128,25 @@ function isSession(value: unknown): value is TestSession {
         candidate.createdAt !== '' &&
         typeof candidate.sessionId === 'string' &&
         candidate.sessionId !== '' &&
-        (candidate.contentType === 'vocabulary' || candidate.contentType === 'kana') &&
+        (candidate.contentType === 'vocabulary' ||
+            candidate.contentType === 'kanji' ||
+            candidate.contentType === 'kana') &&
         (candidate.contentType === 'kana'
             ? candidate.exerciseType === 'writing'
-            : candidate.exerciseType === 'reading') &&
+            : candidate.contentType === 'kanji'
+              ? candidate.exerciseType === 'reading' || candidate.exerciseType === 'meaning'
+              : candidate.exerciseType === 'reading') &&
+        (candidate.contentType === 'kanji'
+            ? Array.isArray(candidate.answerOptions) &&
+              candidate.answerOptions.length === candidate.questions.length &&
+              candidate.answerOptions.every(
+                  (options) =>
+                      Array.isArray(options) &&
+                      options.length === 4 &&
+                      options.every((option) => typeof option === 'string') &&
+                      new Set(options).size === 4,
+              )
+            : candidate.answerOptions === undefined) &&
         candidate.studyMode === 'new' &&
         (candidate.pendingFeedback === null || isTestAnswer(candidate.pendingFeedback)) &&
         (candidate.attempts === undefined ||

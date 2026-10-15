@@ -3,7 +3,7 @@ import { auth } from '@/stores/auth'
 import type { ContentProvider } from '@/services/contentProvider'
 import type { JlptLevel, Locale, TestConfig, VocabularyWord } from '@/types/domain'
 
-interface CatalogEntry {
+export interface CatalogEntry {
     contentId?: string
     word: string
     meaning: Record<Locale, string>
@@ -18,16 +18,14 @@ const WORDS_ENDPOINT = `${import.meta.env.VITE_API_BASE_URL ?? '/api/v1'}/vocabu
 export class VocabularyContentError extends Error {
     constructor(
         public readonly code:
-            | 'providerCatalogError'
-            | 'providerResponseError'
-            | 'providerInsufficientError',
+            'providerCatalogError' | 'providerResponseError' | 'providerInsufficientError',
     ) {
         super(code)
         this.name = 'VocabularyContentError'
     }
 }
 
-async function loadCatalog(): Promise<CatalogEntry[]> {
+export async function loadLocalCatalog(): Promise<CatalogEntry[]> {
     catalogPromise ??= fetch(`${import.meta.env.BASE_URL}data/jlpt-vocabulary.json`)
         .then((response) => {
             if (!response.ok) throw new VocabularyContentError('providerCatalogError')
@@ -185,7 +183,7 @@ export async function loadQuestions(
     // the bundled copy on API errors, or their practice would bypass tracking.
     const catalog = auth.state.accessToken
         ? await loadApiCatalog(locale, config)
-        : await loadCatalog()
+        : await loadLocalCatalog()
     const wordsByLevel = new Map<JlptLevel, CatalogEntry[]>()
     for (const word of catalog) {
         const entries = wordsByLevel.get(word.level) ?? []

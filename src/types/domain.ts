@@ -106,7 +106,8 @@ export interface VocabularyWord {
 export interface TestConfig {
     levels: JlptLevel[]
     questionCount: number
-    contentType?: 'vocabulary' | 'kana'
+    contentType?: 'vocabulary' | 'kanji' | 'kana'
+    exerciseType?: Extract<ExerciseType, 'reading' | 'meaning'>
     kanaScript?: KanaScript
     kanaScripts?: KanaScript[]
     kanaDirection?: KanaDirection
@@ -129,6 +130,7 @@ export interface TestSession {
     version: 2
     config: TestConfig
     questions: VocabularyWord[]
+    answerOptions?: string[][]
     currentIndex: number
     answers: TestAnswer[]
     pendingFeedback: TestAnswer | null

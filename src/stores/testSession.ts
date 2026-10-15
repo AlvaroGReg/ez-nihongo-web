@@ -2,10 +2,11 @@ import { computed, reactive, type ComputedRef } from 'vue'
 
 import { VocabularyContentError, localVocabularyProvider } from '@/services/vocabulary'
 import { locale } from '@/i18n'
-import { createReadingExercise, createVocabularyContentId } from '@/services/content'
+import { createVocabularyContentId } from '@/services/content'
 import type { ContentProvider, LoadQuestions } from '@/services/contentProvider'
 import { isRomajiCorrect } from '@/services/romaji'
 import { createKanaQuestions } from '@/services/kana'
+import { createKanjiAnswerOptions, KanjiContentError, loadKanjiQuestions } from '@/services/kanji'
 import {
     appendHistory,
     clearActiveSession,
@@ -81,30 +82,54 @@ export function createTestSessionStore(
         state.result = null
 
         try {
-            const loaded =
-                config.contentType === 'kana'
-                    ? {
-                          questions: createKanaQuestions(
-                              config.kanaDirection ?? 'hiragana-to-romaji',
-                              config.questionCount,
-                              config.fullExam ?? false,
-                              { rows: config.kanaRows ?? [], types: config.kanaTypes ?? [] },
-                              config.kanaScripts ??
-                                  (config.kanaScript ? [config.kanaScript] : ['hiragana']),
-                          ),
-                          levelsUsed: [5 as const],
-                      }
-                    : await load(config, locale.value)
+            let kanjiDistractorPool: VocabularyWord[] = []
+            let loaded: { questions: VocabularyWord[]; levelsUsed: TestSession['levelsUsed'] }
+            if (config.contentType === 'kana') {
+                loaded = {
+                    questions: createKanaQuestions(
+                        config.kanaDirection ?? 'hiragana-to-romaji',
+                        config.questionCount,
+                        config.fullExam ?? false,
+                        { rows: config.kanaRows ?? [], types: config.kanaTypes ?? [] },
+                        config.kanaScripts ??
+                            (config.kanaScript ? [config.kanaScript] : ['hiragana']),
+                    ),
+                    levelsUsed: [5],
+                }
+            } else if (config.contentType === 'kanji') {
+                const kanjiLoaded = await loadKanjiQuestions(config, locale.value)
+                loaded = kanjiLoaded
+                kanjiDistractorPool = kanjiLoaded.distractorPool
+            } else {
+                loaded = await load(config, locale.value)
+            }
             const questions = loaded.questions.map((question) => ({
                 ...question,
                 contentId:
                     question.contentId ??
                     createVocabularyContentId(question.word, question.furigana),
             }))
+            const exerciseType =
+                config.contentType === 'kanji'
+                    ? (config.exerciseType ?? 'reading')
+                    : config.contentType === 'kana'
+                      ? 'writing'
+                      : 'reading'
             state.activeSession = {
                 version: 2,
                 config,
                 questions,
+                ...(config.contentType === 'kanji'
+                    ? {
+                          answerOptions: questions.map((question) =>
+                              createKanjiAnswerOptions(
+                                  question,
+                                  kanjiDistractorPool,
+                                  exerciseType === 'meaning' ? 'meaning' : 'reading',
+                              ),
+                          ),
+                      }
+                    : {}),
                 currentIndex: 0,
                 answers: [],
                 pendingFeedback: null,
@@ -112,7 +137,7 @@ export function createTestSessionStore(
                 createdAt: new Date().toISOString(),
                 sessionId: createId('session'),
                 contentType: config.contentType ?? 'vocabulary',
-                exerciseType: config.contentType === 'kana' ? 'writing' : 'reading',
+                exerciseType,
                 studyMode: 'new',
                 attempts: [],
             }
@@ -121,7 +146,10 @@ export function createTestSessionStore(
             return true
         } catch (error) {
             state.activeSession = null
-            state.error = error instanceof VocabularyContentError ? error.code : 'providerUnknownError'
+            state.error =
+                error instanceof VocabularyContentError || error instanceof KanjiContentError
+                    ? error.code
+                    : 'providerUnknownError'
             return false
         } finally {
             state.isLoading = false
@@ -133,23 +161,32 @@ export function createTestSessionStore(
         const question = currentQuestion.value
         if (!session || !question || session.pendingFeedback !== null) return false
 
+        const exerciseType = session.exerciseType ?? 'reading'
         const contentId =
             question.contentId ?? createVocabularyContentId(question.word, question.furigana)
-        const exercise = createReadingExercise(question)
+        const expected =
+            session.contentType === 'kanji' && exerciseType === 'meaning'
+                ? question.meaning
+                : session.contentType === 'kanji'
+                  ? question.furigana
+                  : question.romaji
+        const exerciseId = `${contentId}:${session.contentType === 'kanji' ? exerciseType : 'reading'}`
         const eventId = createId('event')
         session.sessionId ??= createId('session')
         const answer: TestAnswer = {
             questionIndex: session.currentIndex,
             response,
-            expected: question.romaji,
+            expected,
             isCorrect:
-                session.config.contentType === 'kana' &&
-                !session.config.kanaDirection?.endsWith('to-romaji')
-                    ? response.trim().normalize('NFC') === question.romaji.normalize('NFC')
-                    : isRomajiCorrect(response, question.romaji, question.furigana),
+                session.contentType === 'kanji'
+                    ? response.trim().normalize('NFC') === expected.trim().normalize('NFC')
+                    : session.config.contentType === 'kana' &&
+                        !session.config.kanaDirection?.endsWith('to-romaji')
+                      ? response.trim().normalize('NFC') === question.romaji.normalize('NFC')
+                      : isRomajiCorrect(response, question.romaji, question.furigana),
             eventId,
             contentId,
-            exerciseId: exercise.id,
+            exerciseId,
         }
         session.answers.push(answer)
         session.pendingFeedback = answer
@@ -157,7 +194,7 @@ export function createTestSessionStore(
             eventId,
             sessionId: session.sessionId,
             contentId,
-            exerciseId: exercise.id,
+            exerciseId,
             response,
             correct: answer.isCorrect,
             createdAt: new Date().toISOString(),
@@ -180,6 +217,21 @@ export function createTestSessionStore(
             clearActiveSession()
             appendHistory(result)
             return true
+        }
+
+        if (session.contentType === 'kanji') {
+            const nextIndex = session.currentIndex + 1
+            const nextQuestion = session.questions[nextIndex]!
+            session.answerOptions ??= []
+            session.answerOptions[nextIndex] = createKanjiAnswerOptions(
+                nextQuestion,
+                session.questions,
+                session.exerciseType === 'meaning' ? 'meaning' : 'reading',
+                session.answers
+                    .filter((answer) => !answer.isCorrect)
+                    .map((answer) => answer.response),
+                session.answerOptions?.flat() ?? [],
+            )
         }
 
         session.currentIndex += 1

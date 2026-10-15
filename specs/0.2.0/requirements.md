@@ -33,10 +33,12 @@ separado para añadir kana, kanji, gramática y traducción sin duplicar el fluj
 su texto traducido y de la posición que ocupe en una respuesta externa.
 
 **REQ-06:** El modelo debe admitir como tipos de contenido `kana`, `kanji`,
-`vocabulary`, `grammar` y `sentence`, aunque 0.2.0 solo ejecute vocabulario.
+`vocabulary`, `grammar` y `sentence`. 0.2.0 ejecuta vocabulario, kana y
+ejercicios de kanji basados en palabras del catálogo JLPT.
 
 **REQ-07:** El modelo debe admitir ejercicios de lectura, significado y
-escritura, aunque 0.2.0 solo conserve el ejercicio actual de romanji.
+escritura. 0.2.0 ejecuta lectura y significado de kanji por selección múltiple,
+además de los ejercicios de romanji y escritura existentes.
 
 ### US-03 — Gestionar la sesión actual
 
@@ -69,11 +71,40 @@ plataforma. Un error de API debe mostrarse como error recuperable y no debe
 provocar un fallback al catálogo local. Los usuarios no autenticados pueden
 seguir usando el catálogo local.
 
+### US-05 — Practicar kanji JLPT sin conexión
+
+Como estudiante, quiero practicar la lectura y el significado de palabras con
+kanji de N5 y N4 sin necesitar una cuenta ni conexión con la API.
+
+**REQ-14:** La configuración debe permitir elegir N5, N4 o ambos para kanji,
+y cargar únicamente palabras con al menos un carácter Han desde el catálogo
+local empaquetado.
+
+**REQ-15:** Cada ejercicio de lectura o significado debe ofrecer cuatro
+respuestas de selección múltiple distintas, incluida exactamente una opción
+con el valor correcto. Las opciones se generan aleatoriamente a partir de los
+niveles seleccionados; valores de respuesta duplicados no se presentan como
+opciones distintas.
+
+**REQ-16:** En el ejercicio de significado, la lectura permanece oculta hasta
+que el estudiante active una pista durante la pregunta. No se revela
+automáticamente después de responder.
+
+**REQ-17:** Los distractores deben priorizar respuestas elegidas
+incorrectamente antes en la sesión actual. No se reutilizan errores de sesiones
+anteriores.
+
+**REQ-18:** La sesión activa debe guardar las opciones de cada pregunta para
+mantenerlas al reanudarla; al avanzar a una pregunta, sus opciones pueden
+incorporar errores previos de esa misma sesión.
+
 ## Fuera de alcance
 
 - Supabase/Auth, CMS, Stripe y webhooks.
 - Persistencia remota o sincronización entre dispositivos.
 - Catálogo completo de kana, kanji o gramática.
+- Fichas de kanji aislados con lecturas individuales, trazos, radicales o
+  componentes; los ejercicios de kanji 0.2.0 se basan en palabras del catálogo.
 - SRS, cola de repasos y analítica de usuario.
 - IA, comunidad, móvil y modo offline completo de la aplicación (shell y
   recursos disponibles sin haber cargado previamente el cliente).

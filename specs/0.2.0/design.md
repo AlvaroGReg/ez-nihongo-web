@@ -104,6 +104,20 @@ recuperables y no cambian silenciosamente a una fuente local, evitando
 registrar actividad autenticada sobre contenido distinto al que sirve la
 plataforma.
 
+## Ejercicios locales de kanji
+
+- `services/kanji.ts` filtra el catálogo local de palabras por los niveles N5 y
+  N4 y requiere que la palabra contenga un carácter Han.
+- La selección de preguntas y los distractores son aleatorios. Lecturas y
+  significados repetidos se deduplican para conservar cuatro opciones distintas.
+- En cada avance se priorizan como distractores las opciones elegidas
+  incorrectamente antes durante la sesión actual; no se consulta el historial.
+- La lectura del ejercicio de significado se muestra solo mediante una pista
+  voluntaria mientras la pregunta sigue activa.
+- Las opciones se guardan dentro de la sesión activa para que al reanudar no
+  cambien las respuestas mostradas.
+- El ejercicio usa el catálogo estático local y no invoca la API de plataforma.
+
 ## Planes y límites
 
 Definir tipos de plan y una función de capacidad local, sin tratarla como
@@ -124,6 +138,9 @@ el entitlement firmado o consultado al backend será la autoridad.
 ## Criterios técnicos de verificación
 
 - `type-check`, pruebas unitarias y build deben seguir funcionando.
+- Los ejercicios de kanji N5/N4 funcionan sin credenciales ni API; las pruebas
+  verifican cuatro opciones únicas, la pista voluntaria y la prioridad de
+  errores de la sesión actual.
 - Las nuevas abstracciones deben probarse sin red mediante proveedores mock.
 - El almacenamiento debe probar JSON válido, corrupto, desconocido y el
   descarte de sesiones heredadas.
