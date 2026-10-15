@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
+import KanjiDictionary from '@/components/dictionary/KanjiDictionary.vue'
 import KanaDictionary from '@/components/dictionary/KanaDictionary.vue'
+import VocabularyDictionary from '@/components/dictionary/VocabularyDictionary.vue'
 import { t } from '@/i18n'
 
 type DictionaryTab = 'kana' | 'vocabulary' | 'kanji'
@@ -51,14 +53,24 @@ const tabs: Array<{ id: DictionaryTab; label: string }> = [
             <KanaDictionary />
         </section>
         <section
-            v-else
-            :id="`dictionary-panel-${activeTab}`"
-            class="dictionary-panel coming-soon-panel"
+            v-else-if="activeTab === 'vocabulary'"
+            id="dictionary-panel-vocabulary"
+            class="dictionary-panel"
             role="tabpanel"
-            :aria-labelledby="`dictionary-tab-${activeTab}`"
+            aria-labelledby="dictionary-tab-vocabulary"
         >
-            <h2>{{ t(activeTab === 'vocabulary' ? 'dictionaryVocabulary' : 'dictionaryKanji') }}</h2>
-            <p>{{ t('dictionaryComingSoon') }}</p>
+            <p class="panel-description">{{ t('vocabularyDictionaryDescription') }}</p>
+            <VocabularyDictionary />
+        </section>
+        <section
+            v-else
+            id="dictionary-panel-kanji"
+            class="dictionary-panel"
+            role="tabpanel"
+            aria-labelledby="dictionary-tab-kanji"
+        >
+            <p class="panel-description">{{ t('kanjiDictionaryDescription') }}</p>
+            <KanjiDictionary />
         </section>
     </main>
 </template>
@@ -80,8 +92,7 @@ const tabs: Array<{ id: DictionaryTab; label: string }> = [
 }
 
 .dictionary-description,
-.panel-description,
-.coming-soon-panel p {
+.panel-description {
     color: var(--muted);
 }
 
@@ -124,19 +135,4 @@ const tabs: Array<{ id: DictionaryTab; label: string }> = [
     margin-bottom: 1.5rem;
 }
 
-.coming-soon-panel {
-    min-height: 12rem;
-    padding: 2rem;
-    border: 1px solid var(--border);
-    border-radius: 1rem;
-    background: var(--surface);
-}
-
-.coming-soon-panel h2 {
-    margin-bottom: 0.6rem;
-}
-
-.coming-soon-panel p {
-    margin-bottom: 0;
-}
 </style>

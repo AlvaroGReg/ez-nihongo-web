@@ -81,6 +81,11 @@ async function loadKanjiLevel(level: JlptLevel): Promise<KanjiCatalogFile> {
     return catalogPromise
 }
 
+export async function loadKanjiCatalog(level: JlptLevel): Promise<KanjiRecord[]> {
+    const catalog = await loadKanjiLevel(level)
+    return Object.values(catalog.kanjis)
+}
+
 function toQuestion(record: KanjiRecord, level: JlptLevel, locale: Locale): VocabularyWord | null {
     const kanjiReadings = [
         ...new Set(
