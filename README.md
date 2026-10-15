@@ -9,6 +9,10 @@ The current functional version is **0.9**. It includes:
 
 - Japanese vocabulary exercises for JLPT levels N5 through N1. Choose one or
   more levels and configure a test of 10 to 100 questions.
+- Offline kanji exercises for JLPT levels N5 through N1, with multiple-choice
+  reading and meaning questions. Meaning questions offer an optional reading
+  hint. N4 and N5 meanings have Spanish translations; N3 through N1 are shown in
+  English.
 - Hiragana and katakana practice, with selectable scripts, rows and kana types.
   Exercises include kana-to-romaji, romaji-to-kana and hiragana-katakana
   conversion.
@@ -16,12 +20,11 @@ The current functional version is **0.9**. It includes:
   score and a review of mistakes.
 - English and Spanish interface, a persistent language preference, and light
   and dark themes.
-- A bundled JLPT vocabulary catalog, so vocabulary practice does not depend on
-  the API.
+- Bundled JLPT vocabulary and kanji catalogs, so these exercises do not depend
+  on the platform API.
 
 ## Roadmap to 1.0
 
-- Kanji exercises. (maybe not available in demo, the .json weights 90mb).
 - Logos and themes with own personality.
 
 ## GitHub Pages deployment
@@ -31,11 +34,12 @@ GitHub Pages on every push. The workflow can also be run manually from GitHub
 Actions. For the first deployment, set the Pages source to **GitHub Actions**
 under **Settings → Pages**.
 
-Pages publishes a static build of the web client—the SPA and the JLPT catalog
-bundled from `public/data/jlpt-vocabulary.json`—under the `/ez-nihongo-web/` base
-path. The demo's vocabulary exercises work without connecting to the API. The
-platform API is not deployed to GitHub Pages, so features that require a backend
-are not part of this demo.
+Pages publishes a static build of the web client—the SPA, the vocabulary catalog
+at `public/data/jlpt-vocabulary.json`, and the kanji catalogs at
+`public/data/jlpt-kanji/n1.json` through `n5.json`—under the `/ez-nihongo-web/`
+base path. Vocabulary and kanji exercises work without connecting to the API.
+The platform API is not deployed to GitHub Pages, so features that require a
+backend are not part of this demo.
 
 ## Development
 
