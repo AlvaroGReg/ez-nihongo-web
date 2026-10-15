@@ -1,71 +1,232 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+import { RouterLink } from 'vue-router'
+
 import { locale, setLocale, t } from '@/i18n'
 import { auth } from '@/stores/auth'
 import { theme, toggleTheme } from '@/stores/theme'
 
+const isMenuOpen = ref(false)
+
 function changeLocale(value: string): void {
     if (value === 'en' || value === 'es') setLocale(value)
+}
+
+function closeMenu(): void {
+    isMenuOpen.value = false
 }
 </script>
 
 <template>
     <header class="app-toolbar">
-        <nav class="toolbar-actions" :aria-label="t('toolbar')">
-            <div class="toolbar-account" aria-live="polite">
-                <template v-if="auth.state.user">
-                    <span class="toolbar-account-label">
-                        {{ t('signedInAs', { email: auth.state.user.email }) }}
-                    </span>
-                    <button class="button button-quiet toolbar-button" type="button" @click="auth.signOut">
-                        {{ t('signOut') }}
+        <div class="toolbar-layout">
+            <div class="toolbar-navigation">
+                <button
+                    class="menu-toggle"
+                    type="button"
+                    :aria-expanded="isMenuOpen"
+                    :aria-label="t('openNavigation')"
+                    @click="isMenuOpen = !isMenuOpen"
+                >
+                    <span aria-hidden="true">☰</span>
+                </button>
+                <nav v-if="isMenuOpen" class="navigation-menu" :aria-label="t('mainNavigation')">
+                    <RouterLink to="/exercises" @click="closeMenu">
+                        {{ t('exercises') }}
+                    </RouterLink>
+                    <button class="dictionary-link" type="button" disabled>
+                        {{ t('dictionary') }}
+                        <span>{{ t('comingSoon') }}</span>
                     </button>
-                </template>
-                <RouterLink v-else class="button button-secondary toolbar-button" to="/auth">
-                    {{ t('loginOrRegister') }}
-                </RouterLink>
+                </nav>
             </div>
 
-            <label class="toolbar-language">
-                <span class="visually-hidden">{{ t('language') }}</span>
-                <select
-                    :value="locale"
-                    :aria-label="t('language')"
-                    @change="changeLocale(($event.target as HTMLSelectElement).value)"
-                >
-                    <option value="en">{{ t('english') }}</option>
-                    <option value="es">{{ t('spanish') }}</option>
-                </select>
-            </label>
+            <RouterLink class="toolbar-brand" to="/" @click="closeMenu">
+                {{ t('appTitle') }}
+            </RouterLink>
 
-            <button
-                class="theme-toggle"
-                type="button"
-                :aria-label="theme === 'light' ? t('switchToDarkTheme') : t('switchToLightTheme')"
-                @click="toggleTheme"
-            >
-                {{ theme === 'light' ? '🌙' : '☀️' }}
-            </button>
-        </nav>
+            <nav class="toolbar-actions" :aria-label="t('toolbar')">
+                <label class="toolbar-language">
+                    <span class="visually-hidden">{{ t('language') }}</span>
+                    <select
+                        :value="locale"
+                        :aria-label="t('language')"
+                        @change="changeLocale(($event.target as HTMLSelectElement).value)"
+                    >
+                        <option value="en">{{ t('english') }}</option>
+                        <option value="es">{{ t('spanish') }}</option>
+                    </select>
+                </label>
+
+                <button
+                    class="theme-toggle"
+                    type="button"
+                    :aria-label="theme === 'light' ? t('switchToDarkTheme') : t('switchToLightTheme')"
+                    @click="toggleTheme"
+                >
+                    {{ theme === 'light' ? '🌙' : '☀️' }}
+                </button>
+
+                <RouterLink
+                    v-if="!auth.state.user"
+                    class="account-icon-button"
+                    to="/auth"
+                    :aria-label="t('loginOrRegister')"
+                    :title="t('loginOrRegister')"
+                >
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="8" r="3.5" />
+                        <path d="M5 21v-1a7 7 0 0 1 14 0v1" />
+                        <path d="M19 8h4m-2-2 2 2-2 2" />
+                    </svg>
+                </RouterLink>
+                <button
+                    v-else
+                    class="account-icon-button"
+                    type="button"
+                    :aria-label="t('signOut')"
+                    :title="t('signOut')"
+                    @click="auth.signOut"
+                >
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M10 4H5v16h5" />
+                        <path d="M14 8l4 4-4 4m4-4H9" />
+                    </svg>
+                </button>
+            </nav>
+        </div>
     </header>
 </template>
 
 <style lang="scss">
 .app-toolbar {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    height: var(--header-height);
-    padding: 20px;
     position: relative;
-    width: 100%;
     z-index: 2;
+    width: 100%;
+    height: var(--header-height);
+    padding-inline: 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+
+    .toolbar-layout {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        max-width: var(--content-max-width);
+        height: 100%;
+        margin-inline: auto;
+    }
+
+    .toolbar-brand {
+        position: absolute;
+        left: 50%;
+        color: var(--text);
+        font-size: 1.2rem;
+        font-weight: 800;
+        text-decoration: none;
+        transform: translateX(-50%);
+        white-space: nowrap;
+    }
+
+    .toolbar-navigation {
+        position: relative;
+    }
 
     .toolbar-actions {
-        margin-inline: auto;
-        max-width: var(--content-max-width);
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.75rem;
+    }
+
+    .menu-toggle {
+        width: 2.65rem;
+        height: 2.65rem;
+        border: 1px solid var(--border);
+        border-radius: 0.7rem;
+        background: var(--surface);
+        color: var(--text);
+        font-size: 1.2rem;
+    }
+
+    .account-icon-button {
+        display: grid;
+        width: 2.65rem;
+        height: 2.65rem;
+        place-items: center;
+        padding: 0;
+        border: 1px solid var(--border);
+        border-radius: 0.7rem;
+        background: var(--surface);
+        color: var(--text);
+        cursor: pointer;
+
+        svg {
+            width: 1.2rem;
+            height: 1.2rem;
+            fill: none;
+            stroke: currentColor;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-width: 1.7;
+        }
+    }
+
+    .navigation-menu {
+        position: absolute;
+        top: calc(100% + 0.75rem);
+        left: 0;
+        z-index: 5;
+        display: grid;
+        min-width: 13rem;
+        padding: 0.4rem;
+        border: 1px solid var(--border);
+        border-radius: 0.8rem;
+        background: var(--surface);
+        box-shadow: 0 1rem 2rem rgb(33 49 77 / 14%);
+
+        a,
+        .dictionary-link {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 2.8rem;
+            padding: 0.65rem 0.75rem;
+            border: 0;
+            border-radius: 0.5rem;
+            background: transparent;
+            color: var(--text);
+            font-size: 0.95rem;
+            text-align: left;
+            text-decoration: none;
+        }
+
+        a:hover {
+            background: var(--secondary-background);
+        }
+
+        .dictionary-link:disabled {
+            color: var(--muted);
+            cursor: not-allowed;
+            opacity: 0.75;
+        }
+
+        .dictionary-link span {
+            font-size: 0.7rem;
+        }
     }
 
     @media (width <= 560px) {
         padding-inline: 0.75rem;
+
+        .toolbar-actions {
+            gap: 0.4rem;
+        }
+
+        .toolbar-brand {
+            font-size: 1rem;
+        }
     }
 }
 </style>

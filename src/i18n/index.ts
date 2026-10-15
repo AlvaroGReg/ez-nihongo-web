@@ -6,8 +6,20 @@ import type { Locale } from '@/types/domain'
 const english = {
     appEyebrow: 'Japanese practice',
     appTitle: 'EZ Nihongo',
-    homeDescription:
+    welcomeTitle: 'Japanese practice, made simple',
+    exerciseSelectionTitle: 'Choose an exercise',
+    homeDescription: 'Explore the exercises currently available:',
+    exerciseDescription:
         'Practice JLPT vocabulary and kanji, and convert hiragana and katakana in both directions.',
+    kanaSummary: 'Kana: practice hiragana and katakana, including conversion between scripts.',
+    vocabularySummary: 'Vocabulary: study words from JLPT levels N1–N5.',
+    kanjiSummary: 'Kanji: practice JLPT readings and meanings from N1–N5.',
+    goToExercises: 'Go to exercises',
+    exercises: 'Exercises',
+    dictionary: 'Dictionary',
+    comingSoon: 'Coming soon',
+    openNavigation: 'Open navigation menu',
+    mainNavigation: 'Main navigation',
     language: 'Language',
     toolbar: 'Application toolbar',
     switchToDarkTheme: 'Switch to dark theme',
@@ -134,8 +146,20 @@ type TranslationKey = keyof typeof english
 
 const spanish: Partial<Record<TranslationKey, string>> = {
     appEyebrow: 'Práctica de japonés',
-    homeDescription:
+    welcomeTitle: 'Practica japonés de forma sencilla',
+    exerciseSelectionTitle: 'Elige un ejercicio',
+    homeDescription: 'Estos son los ejercicios disponibles actualmente:',
+    exerciseDescription:
         'Practica vocabulario y kanji JLPT, y convierte hiragana y katakana en ambas direcciones.',
+    kanaSummary: 'Kana: practica hiragana y katakana, incluida la conversión entre silabarios.',
+    vocabularySummary: 'Vocabulario: estudia palabras de los niveles JLPT N1–N5.',
+    kanjiSummary: 'Kanji: practica lecturas y significados JLPT de N1–N5.',
+    goToExercises: 'Ir a ejercicios',
+    exercises: 'Ejercicios',
+    dictionary: 'Diccionario',
+    comingSoon: 'Próximamente',
+    openNavigation: 'Abrir menú de navegación',
+    mainNavigation: 'Navegación principal',
     language: 'Idioma',
     toolbar: 'Barra de herramientas de la aplicación',
     switchToDarkTheme: 'Cambiar al tema nocturno',

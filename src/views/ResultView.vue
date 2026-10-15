@@ -23,7 +23,7 @@ onMounted(() => {
 
 function startAnotherTest(): void {
     testSession.state.result = null
-    void router.push('/')
+    void router.push('/exercises')
 }
 </script>
 
