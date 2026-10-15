@@ -9,6 +9,8 @@ const english = {
     homeDescription:
         'Test your JLPT vocabulary by reading Japanese words and typing their romanji.',
     language: 'Language',
+    switchToDarkTheme: 'Switch to dark theme',
+    switchToLightTheme: 'Switch to light theme',
     english: 'English',
     spanish: 'Spanish',
     jlptLevels: 'JLPT levels',
@@ -85,6 +87,8 @@ const spanish: Partial<Record<TranslationKey, string>> = {
     homeDescription:
         'Pon a prueba tu vocabulario JLPT leyendo palabras japonesas y escribiendo su romanji.',
     language: 'Idioma',
+    switchToDarkTheme: 'Cambiar al tema nocturno',
+    switchToLightTheme: 'Cambiar al tema diurno',
     english: 'Inglés',
     spanish: 'Español',
     jlptLevels: 'Niveles JLPT',

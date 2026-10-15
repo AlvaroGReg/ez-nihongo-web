@@ -1,6 +1,28 @@
 :root {
-    color: #18202a;
-    background: #f5f7fb;
+    color: var(--text);
+    background: var(--page-background);
+    color-scheme: light;
+    --text: #18202a;
+    --page-background: #f5f7fb;
+    --surface: #fff;
+    --border: #e2e7ef;
+    --field-border: #cbd4e2;
+    --muted: #5d6878;
+    --subtle: #7a8493;
+    --field-text: #18202a;
+    --field-label: #354052;
+    --secondary-background: #e9edf5;
+    --secondary-text: #354052;
+    --selected-background: #eef1ff;
+    --selected-text: #3d4e9c;
+    --error-background: #fff0f0;
+    --error-text: #a12632;
+    --success-background: #eaf8f0;
+    --success-text: #167346;
+    --feedback-background: #fff6f6;
+    --feedback-border: #f1caca;
+    --feedback-correct-background: #f1fbf5;
+    --feedback-correct-border: #bde6ca;
     font-family:
         Inter,
         ui-sans-serif,
@@ -11,6 +33,31 @@
         sans-serif;
     font-synthesis: none;
     text-rendering: optimizeLegibility;
+}
+
+:root[data-theme='dark'] {
+    color-scheme: dark;
+    --text: #e7ebf2;
+    --page-background: #111722;
+    --surface: #1c2533;
+    --border: #354154;
+    --field-border: #4b596e;
+    --muted: #b0bac9;
+    --subtle: #9ba7b8;
+    --field-text: #e7ebf2;
+    --field-label: #d3dae5;
+    --secondary-background: #303b4d;
+    --secondary-text: #e0e6ef;
+    --selected-background: #293456;
+    --selected-text: #c6d0ff;
+    --error-background: #42272e;
+    --error-text: #ffb8c0;
+    --success-background: #203a31;
+    --success-text: #9ce0b9;
+    --feedback-background: #3b292d;
+    --feedback-border: #70434a;
+    --feedback-correct-background: #20382e;
+    --feedback-correct-border: #3c6b50;
 }
 
 * {
@@ -43,15 +90,27 @@ button:disabled {
     z-index: 2;
     top: 1rem;
     right: 1rem;
+    display: flex;
+    align-items: flex-end;
+    gap: 0.5rem;
 }
 .app-language-picker .field {
     width: 8rem;
     padding: 0.5rem;
-    border: 1px solid #e2e7ef;
+    border: 1px solid var(--border);
     border-radius: 0.7rem;
-    background: #fff;
+    background: var(--surface);
     box-shadow: 0 0.5rem 1.5rem rgb(33 49 77 / 8%);
     font-size: 0.75rem;
+}
+.theme-toggle {
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 1px solid var(--border);
+    border-radius: 0.7rem;
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: 0 0.5rem 1.5rem rgb(33 49 77 / 8%);
 }
 .app-language-picker select {
     padding: 0.35rem 0.45rem;
@@ -67,8 +126,8 @@ button:disabled {
 .result-card {
     width: 100%;
     padding: clamp(1.5rem, 5vw, 3rem);
-    background: #fff;
-    border: 1px solid #e2e7ef;
+    background: var(--surface);
+    border: 1px solid var(--border);
     border-radius: 1.5rem;
     box-shadow: 0 1.5rem 4rem rgb(33 49 77 / 10%);
 }
@@ -96,7 +155,7 @@ h2 {
 }
 .hero-copy {
     max-width: 36rem;
-    color: #5d6878;
+    color: var(--muted);
     font-size: 1.1rem;
     line-height: 1.6;
 }
@@ -105,7 +164,7 @@ h2 {
     flex-wrap: wrap;
     align-items: center;
     gap: 0.5rem;
-    color: #5d6878;
+    color: var(--muted);
     font-size: 0.9rem;
 }
 .setup-form,
@@ -122,7 +181,7 @@ h2 {
 .field {
     display: grid;
     gap: 0.45rem;
-    color: #354052;
+    color: var(--field-label);
     font-size: 0.9rem;
     font-weight: 700;
 }
@@ -130,10 +189,10 @@ select,
 input {
     width: 100%;
     padding: 0.8rem 0.9rem;
-    border: 1px solid #cbd4e2;
+    border: 1px solid var(--field-border);
     border-radius: 0.7rem;
-    background: #fff;
-    color: #18202a;
+    background: var(--surface);
+    color: var(--field-text);
 }
 fieldset {
     min-width: 0;
@@ -154,9 +213,9 @@ legend {
     justify-items: center;
     gap: 0.45rem;
     padding: 0.7rem 0.35rem;
-    border: 1px solid #cbd4e2;
+    border: 1px solid var(--field-border);
     border-radius: 0.7rem;
-    color: #354052;
+    color: var(--field-label);
     cursor: pointer;
     font-size: 0.85rem;
     transition:
@@ -166,8 +225,8 @@ legend {
 }
 .check-option:has(input:checked) {
     border-color: #5167c7;
-    background: #eef1ff;
-    color: #3d4e9c;
+    background: var(--selected-background);
+    color: var(--selected-text);
 }
 .check-option input {
     width: 1rem;
@@ -200,7 +259,7 @@ legend {
     cursor: grabbing;
 }
 .range-limits {
-    color: #7a8493;
+    color: var(--subtle);
     font-size: 0.8rem;
     font-weight: 600;
 }
@@ -228,8 +287,8 @@ button:focus-visible {
     color: #fff;
 }
 .button-secondary {
-    background: #e9edf5;
-    color: #354052;
+    background: var(--secondary-background);
+    color: var(--secondary-text);
 }
 .button-quiet {
     background: transparent;
@@ -256,16 +315,16 @@ button:focus-visible {
     line-height: 1.45;
 }
 .message-error {
-    background: #fff0f0;
-    color: #a12632;
+    background: var(--error-background);
+    color: var(--error-text);
 }
 .message-info {
-    background: #eef1ff;
-    color: #3d4e9c;
+    background: var(--selected-background);
+    color: var(--selected-text);
 }
 .message-success {
-    background: #eaf8f0;
-    color: #167346;
+    background: var(--success-background);
+    color: var(--success-text);
 }
 .test-page {
     min-height: 100vh;
@@ -279,7 +338,7 @@ button:focus-visible {
 }
 .progress-label {
     margin: 0;
-    color: #5d6878;
+    color: var(--muted);
     font-weight: 700;
 }
 .question-card {
@@ -287,7 +346,7 @@ button:focus-visible {
     text-align: center;
 }
 .question-index {
-    color: #7a8493;
+    color: var(--subtle);
     font-size: 0.85rem;
     font-weight: 700;
 }
@@ -298,7 +357,7 @@ button:focus-visible {
 }
 .furigana {
     margin-bottom: 2rem;
-    color: #697586;
+    color: var(--muted);
     font-size: clamp(1.4rem, 5vw, 2rem);
 }
 .answer-form {
@@ -312,14 +371,14 @@ button:focus-visible {
     max-width: 28rem;
     margin: 2rem auto 0;
     padding: 1.25rem;
-    border: 1px solid #f1caca;
+    border: 1px solid var(--feedback-border);
     border-radius: 0.9rem;
-    background: #fff6f6;
+    background: var(--feedback-background);
     text-align: left;
 }
 .feedback-correct {
-    border-color: #bde6ca;
-    background: #f1fbf5;
+    border-color: var(--feedback-correct-border);
+    background: var(--feedback-correct-background);
 }
 .feedback p {
     margin: 0;
@@ -362,11 +421,11 @@ button:focus-visible {
     display: grid;
     gap: 0.2rem;
     padding: 1rem;
-    border: 1px solid #e2e7ef;
+    border: 1px solid var(--border);
     border-radius: 0.7rem;
 }
 .mistake-list span {
-    color: #5d6878;
+    color: var(--muted);
     font-size: 0.9rem;
 }
 .modal-backdrop {
@@ -382,11 +441,11 @@ button:focus-visible {
     width: min(100%, 440px);
     padding: 2rem;
     border-radius: 1rem;
-    background: #fff;
+    background: var(--surface);
     box-shadow: 0 1.5rem 4rem rgb(0 0 0 / 25%);
 }
 .modal p:not(.eyebrow) {
-    color: #5d6878;
+    color: var(--muted);
     line-height: 1.5;
 }
 

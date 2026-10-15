@@ -2,6 +2,7 @@
 import { useRouter } from 'vue-router'
 
 import { locale, setLocale, t } from '@/i18n'
+import { theme, toggleTheme } from '@/stores/theme'
 import { testSession } from '@/stores/testSession'
 
 const router = useRouter()
@@ -23,6 +24,14 @@ function changeLocale(value: string): void {
 
 <template>
     <div class="language-picker app-language-picker">
+        <button
+            class="theme-toggle"
+            type="button"
+            :aria-label="theme === 'light' ? t('switchToDarkTheme') : t('switchToLightTheme')"
+            @click="toggleTheme"
+        >
+            {{ theme === 'light' ? '🌙' : '☀️' }}
+        </button>
         <label class="field" for="locale-select">
             <span>{{ t('language') }}</span>
             <select

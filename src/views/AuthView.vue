@@ -108,7 +108,7 @@ function toggleMode(): void {
 .auth-hint,
 .auth-switch {
     margin: 0;
-    color: #5d6878;
+    color: var(--muted);
     font-size: 0.9rem;
     line-height: 1.5;
 }
@@ -125,7 +125,7 @@ function toggleMode(): void {
 .auth-back {
     display: inline-block;
     margin-top: 1rem;
-    color: #5167c7;
+    color: #7f91ef;
     font-weight: 700;
 }
 </style>
