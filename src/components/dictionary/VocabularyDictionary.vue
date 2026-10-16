@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 
 import DictionaryLevelFilter from '@/components/dictionary/DictionaryLevelFilter.vue'
+import DictionaryLoading from '@/components/dictionary/DictionaryLoading.vue'
 import VocabularyCard from '@/components/dictionary/VocabularyCard.vue'
 import { t } from '@/i18n'
 import { loadLocalCatalog, type CatalogEntry } from '@/services/vocabulary'
@@ -9,6 +10,7 @@ import type { JlptLevel } from '@/types/domain'
 
 const selectedLevels = ref<JlptLevel[]>([5, 4, 3, 2, 1])
 const catalog = ref<CatalogEntry[]>([])
+const isLoading = ref(true)
 const loadError = ref(false)
 
 const visibleEntries = computed(() =>
@@ -22,6 +24,8 @@ onMounted(async () => {
         catalog.value = await loadLocalCatalog()
     } catch {
         loadError.value = true
+    } finally {
+        isLoading.value = false
     }
 })
 </script>
@@ -29,7 +33,8 @@ onMounted(async () => {
 <template>
     <div class="catalog-dictionary">
         <DictionaryLevelFilter v-model="selectedLevels" />
-        <p v-if="loadError" class="load-error" role="alert">{{ t('providerCatalogError') }}</p>
+        <DictionaryLoading v-if="isLoading" />
+        <p v-else-if="loadError" class="load-error" role="alert">{{ t('providerCatalogError') }}</p>
         <p v-else-if="visibleEntries.length === 0" class="empty-state">
             {{ t('dictionaryNoEntries') }}
         </p>
