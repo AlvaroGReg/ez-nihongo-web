@@ -21,7 +21,17 @@ const router = createRouter({
         { path: '/result', name: 'result', component: ResultView },
         { path: '/about', name: 'about', component: AboutView },
     ],
-    scrollBehavior(to) {
+    scrollBehavior(to, from) {
+        if (
+            to.name === 'exercises' &&
+            from.name === 'exercises' &&
+            to.path === from.path &&
+            to.hash === from.hash &&
+            to.fullPath !== from.fullPath
+        ) {
+            return false
+        }
+
         return to.hash ? { el: to.hash, behavior: 'smooth' } : { top: 0 }
     },
 })
