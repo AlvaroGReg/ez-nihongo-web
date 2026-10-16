@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
+import { createMemoryHistory, createRouter } from 'vue-router'
 
 import { setLocale } from '@/i18n'
 import ExerciseView from '@/views/ExerciseView.vue'
@@ -15,9 +16,18 @@ async function chooseExercise(
         .findAll('.exercise-tab')
         .find((button) => button.text().toLowerCase() === type)!
         .trigger('click')
+    await flushPromises()
+    expect(router.currentRoute.value.path).toBe(`/exercises/${type}`)
 }
 
 describe('HomeView', () => {
+    function createExerciseTestRouter() {
+        return createRouter({
+            history: createMemoryHistory(),
+            routes: [{ path: '/exercises/:type', component: ExerciseView }],
+        })
+    }
+
     it('briefly describes the implemented exercises and links to their selection', () => {
         const wrapper = mount(HomeView, {
             global: { plugins: [router] },
@@ -53,6 +63,59 @@ describe('HomeView', () => {
         })
         expect(wrapper.text()).toContain('Start test')
         expect(wrapper.text()).not.toContain('Log in or create account')
+    })
+
+    it('restores a preconfigured kana exercise from its URL', async () => {
+        const testRouter = createExerciseTestRouter()
+        await testRouter.push(
+            '/exercises/kana?direction=hiragana-to-katakana&scripts=katakana&rows=ka&count=1&full=1',
+        )
+        const wrapper = mount(ExerciseView, {
+            global: { plugins: [testRouter] },
+        })
+        await flushPromises()
+
+        expect(wrapper.get('.kana-direction-tab[aria-pressed="true"]').text()).toBe(
+            'Convert between kana',
+        )
+        expect(wrapper.get('.kana-script-tab[aria-pressed="true"]').text()).toBe(
+            'Practice Katakana',
+        )
+        expect(
+            wrapper
+                .findAll('.kana-choice')
+                .find((button) => button.text() === 'カ/ka')!
+                .attributes('aria-pressed'),
+        ).toBe('true')
+        expect(wrapper.get('.full-exam-option input').element).toHaveProperty('checked', true)
+        expect(wrapper.get('.question-count-field output').text()).toBe('5')
+    })
+
+    it('writes edited kanji settings to the shareable URL', async () => {
+        const testRouter = createExerciseTestRouter()
+        await testRouter.push('/exercises/kanji?levels=5,3&count=20&kanjiType=meaning')
+        const wrapper = mount(ExerciseView, {
+            global: { plugins: [testRouter] },
+        })
+        await flushPromises()
+
+        expect(wrapper.get('select').element).toHaveProperty('value', 'meaning')
+        expect(wrapper.get('input[type="range"]').element).toHaveProperty('value', '20')
+        expect(wrapper.get('input[type="checkbox"][value="3"]').element).toHaveProperty(
+            'checked',
+            true,
+        )
+
+        await wrapper.get('select').setValue('reading')
+        await wrapper.get('input[type="checkbox"][value="2"]').setValue(true)
+        await wrapper.get('input[type="range"]').setValue(30)
+        await flushPromises()
+
+        expect(testRouter.currentRoute.value.query).toMatchObject({
+            levels: '5,3,2',
+            count: '30',
+        })
+        expect(testRouter.currentRoute.value.query.kanjiType).toBeUndefined()
     })
 
     it('offers a combined kana exercise and disables the count for a complete exam', async () => {
@@ -134,9 +197,9 @@ describe('HomeView', () => {
             .find((button) => button.text() === 'Convert between kana')!
             .trigger('click')
 
-        expect(
-            wrapper.get('.kana-direction-tab[aria-pressed="true"]').text(),
-        ).toBe('Convert between kana')
+        expect(wrapper.get('.kana-direction-tab[aria-pressed="true"]').text()).toBe(
+            'Convert between kana',
+        )
         expect(wrapper.get('.kana-direction-help').text()).toContain(
             'write its equivalent in the other',
         )

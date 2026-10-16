@@ -1,14 +1,22 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 import KanjiDictionary from '@/components/dictionary/KanjiDictionary.vue'
 import KanaDictionary from '@/components/dictionary/KanaDictionary.vue'
 import VocabularyDictionary from '@/components/dictionary/VocabularyDictionary.vue'
 import { t } from '@/i18n'
 
-type DictionaryTab = 'kana' | 'vocabulary' | 'kanji'
+const dictionaryTabs = ['kana', 'vocabulary', 'kanji'] as const
+type DictionaryTab = (typeof dictionaryTabs)[number]
 
-const activeTab = ref<DictionaryTab>('kana')
+const route = useRoute()
+const router = useRouter()
+const activeTab = computed<DictionaryTab>(() =>
+    dictionaryTabs.includes(route.params.type as DictionaryTab)
+        ? (route.params.type as DictionaryTab)
+        : 'kana',
+)
 
 const tabs: Array<{ id: DictionaryTab; label: string }> = [
     { id: 'kana', label: 'dictionaryKana' },
@@ -36,7 +44,7 @@ const tabs: Array<{ id: DictionaryTab; label: string }> = [
                 role="tab"
                 :aria-selected="activeTab === tab.id"
                 :aria-controls="`dictionary-panel-${tab.id}`"
-                @click="activeTab = tab.id"
+                @click="router.push(`/dictionary/${tab.id}`)"
             >
                 {{ t(tab.label) }}
             </button>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import { locale, t } from '@/i18n'
 import { kanaEntries, kanaTypes, selectKanaEntries } from '@/services/kana'
@@ -8,16 +8,113 @@ import { testSession } from '@/stores/testSession'
 import type { KanaDirection, KanaRow, KanaScript, KanaType, JlptLevel } from '@/types/domain'
 
 const router = useRouter()
-const selectedLevels = ref<JlptLevel[]>([5])
-const questionCount = ref(10)
-const exerciseType = ref<'vocabulary' | 'kanji' | 'kana'>('vocabulary')
-const kanjiExerciseType = ref<'reading' | 'meaning'>('reading')
-const selectedKanjiLevels = ref<JlptLevel[]>([5])
-const kanaDirection = ref<KanaDirection>('hiragana-to-romaji')
-const selectedKanaScripts = ref<KanaScript[]>(['hiragana'])
-const selectedKanaRows = ref<KanaRow[]>([])
-const selectedKanaTypes = ref<KanaType[]>([])
-const fullExam = ref(false)
+const route = useRoute()
+const exerciseTypes = ['vocabulary', 'kanji', 'kana'] as const
+type ExerciseType = (typeof exerciseTypes)[number]
+const availableLevels: JlptLevel[] = [5, 4, 3, 2, 1]
+const validKanaDirections: KanaDirection[] = [
+    'hiragana-to-romaji',
+    'romaji-to-hiragana',
+    'hiragana-to-katakana',
+]
+const kanaScripts: KanaScript[] = ['hiragana', 'katakana']
+const kanaRows: KanaRow[] = [
+    'a',
+    'ka',
+    'sa',
+    'ta',
+    'na',
+    'ha',
+    'ma',
+    'ya',
+    'ra',
+    'wa',
+    'n',
+    'ga',
+    'za',
+    'da',
+    'ba',
+    'pa',
+    'kya',
+    'sha',
+    'cha',
+    'nya',
+    'hya',
+    'mya',
+    'rya',
+    'gya',
+    'ja',
+    'bya',
+    'pya',
+]
+
+function queryValue(key: string): string | undefined {
+    const value = route.query[key]
+    return typeof value === 'string' ? value : undefined
+}
+
+function queryList<T extends string>(key: string, allowed: readonly T[], fallback: T[]): T[] {
+    const value = queryValue(key)
+    if (value === undefined) return fallback
+    const requested = value.split(',')
+    return allowed.filter((item) => requested.includes(item))
+}
+
+function queryLevels(): JlptLevel[] {
+    const value = queryValue('levels')
+    if (value === undefined) return [5]
+    return availableLevels.filter((level) => value.split(',').includes(String(level)))
+}
+
+function queryCount(): number {
+    const value = Number(queryValue('count'))
+    const isKana = route.params.type === 'kana'
+    const minimum = isKana ? 1 : 10
+    const maximum = isKana ? kanaEntries.length * kanaScripts.length : 100
+    return Number.isInteger(value) ? Math.max(minimum, Math.min(value, maximum)) : 10
+}
+
+function queryKanaScripts(): KanaScript[] {
+    return queryList('scripts', kanaScripts, ['hiragana'])
+}
+
+function ensureKanaScript(value: KanaScript[]): KanaScript[] {
+    return value.length > 0 ? value : ['hiragana']
+}
+
+function setIfChanged<T>(target: { value: T }, value: T): void {
+    if (Array.isArray(value) && Array.isArray(target.value)) {
+        const current = target.value as unknown[]
+        if (
+            value.length === current.length &&
+            value.every((item, index) => item === current[index])
+        )
+            return
+    } else if (target.value === value) {
+        return
+    }
+    target.value = value
+}
+
+const initialLevels = queryLevels()
+const selectedLevels = ref<JlptLevel[]>(initialLevels)
+const questionCount = ref(queryCount())
+const exerciseType = computed<ExerciseType>(() =>
+    exerciseTypes.includes(route.params.type as ExerciseType)
+        ? (route.params.type as ExerciseType)
+        : 'vocabulary',
+)
+const kanjiExerciseType = ref<'reading' | 'meaning'>(
+    queryValue('kanjiType') === 'meaning' ? 'meaning' : 'reading',
+)
+const selectedKanjiLevels = ref<JlptLevel[]>([...initialLevels])
+const kanaDirection = ref<KanaDirection>(
+    queryList('direction', validKanaDirections, ['hiragana-to-romaji'])[0] ?? 'hiragana-to-romaji',
+)
+const selectedKanaScripts = ref<KanaScript[]>(ensureKanaScript(queryKanaScripts()))
+const selectedKanaRows = ref<KanaRow[]>(queryList('rows', kanaRows, []))
+const selectedKanaTypes = ref<KanaType[]>(queryList('types', kanaTypes, []))
+const fullExam = ref(queryValue('full') === '1')
 const validationError = ref('')
 
 const levels = [
@@ -137,6 +234,74 @@ watch([exerciseType, selectedKanaEntries], ([type, entries]) => {
     }
 })
 
+function applyQueryConfiguration(): void {
+    const nextLevels = queryLevels()
+    setIfChanged(selectedLevels, nextLevels)
+    setIfChanged(selectedKanjiLevels, [...nextLevels])
+    setIfChanged(questionCount, queryCount())
+    setIfChanged(kanjiExerciseType, queryValue('kanjiType') === 'meaning' ? 'meaning' : 'reading')
+    setIfChanged(
+        kanaDirection,
+        queryList('direction', validKanaDirections, ['hiragana-to-romaji'])[0] ??
+            'hiragana-to-romaji',
+    )
+    setIfChanged(selectedKanaScripts, ensureKanaScript(queryKanaScripts()))
+    setIfChanged(selectedKanaRows, queryList('rows', kanaRows, []))
+    setIfChanged(selectedKanaTypes, queryList('types', kanaTypes, []))
+    setIfChanged(fullExam, queryValue('full') === '1')
+}
+
+watch(() => route.query, applyQueryConfiguration)
+
+function updateUrlConfiguration(): void {
+    const query: Record<string, string> = {}
+    const addList = (key: string, values: readonly string[], defaults: readonly string[]) => {
+        if (
+            values.length !== defaults.length ||
+            values.some((value, index) => value !== defaults[index])
+        ) {
+            query[key] = values.join(',')
+        }
+    }
+
+    if (isKanaExercise.value) {
+        if (!fullExam.value && questionCount.value !== 10) query.count = String(questionCount.value)
+        if (fullExam.value) query.full = '1'
+        if (kanaDirection.value !== 'hiragana-to-romaji') query.direction = kanaDirection.value
+        addList('scripts', selectedKanaScripts.value, ['hiragana'])
+        addList('rows', selectedKanaRows.value, [])
+        addList('types', selectedKanaTypes.value, [])
+    } else {
+        const selected = selectedContentLevels.value
+        addList('levels', selected.map(String), ['5'])
+        if (questionCount.value !== 10) query.count = String(questionCount.value)
+        if (isKanjiExercise.value && kanjiExerciseType.value !== 'reading') {
+            query.kanjiType = kanjiExerciseType.value
+        }
+    }
+
+    if (JSON.stringify(query) !== JSON.stringify(route.query)) {
+        void router.replace({ path: route.path, query })
+    }
+}
+
+watch(
+    [
+        exerciseType,
+        selectedLevels,
+        selectedKanjiLevels,
+        questionCount,
+        kanjiExerciseType,
+        kanaDirection,
+        selectedKanaScripts,
+        selectedKanaRows,
+        selectedKanaTypes,
+        fullExam,
+    ],
+    updateUrlConfiguration,
+    { deep: true },
+)
+
 async function startTest(): Promise<void> {
     validationError.value = ''
     testSession.clearError()
@@ -207,7 +372,7 @@ function backToSetup(): void {
                         class="exercise-tab"
                         type="button"
                         :aria-pressed="exerciseType === type"
-                        @click="exerciseType = type"
+                        @click="router.push(`/exercises/${type}`)"
                     >
                         {{ t(type === 'vocabulary' ? 'vocabularyExercise' : `${type}Exercise`) }}
                     </button>
@@ -222,7 +387,11 @@ function backToSetup(): void {
                 >
                     <div v-if="isKanaExercise" class="field kana-direction-field">
                         <span>{{ t('exerciseDirection') }}</span>
-                        <div class="kana-direction-tabs" role="group" :aria-label="t('exerciseDirection')">
+                        <div
+                            class="kana-direction-tabs"
+                            role="group"
+                            :aria-label="t('exerciseDirection')"
+                        >
                             <button
                                 v-for="direction in directions"
                                 :key="direction.value"

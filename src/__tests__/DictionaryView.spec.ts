@@ -4,6 +4,7 @@ import { nextTick } from 'vue'
 
 import kanjiN5 from '../../public/data/jlpt-kanji/n5.json'
 import { locale, setLocale } from '@/i18n'
+import router from '@/router'
 import DictionaryView from '@/views/DictionaryView.vue'
 
 describe('DictionaryView', () => {
@@ -13,13 +14,18 @@ describe('DictionaryView', () => {
         previousLocale = locale.value
     })
 
+    async function mountDictionary() {
+        await router.push('/dictionary/kana')
+        return mount(DictionaryView, { global: { plugins: [router] } })
+    }
+
     afterEach(() => {
         setLocale(previousLocale)
         vi.unstubAllGlobals()
     })
 
-    it('shows the hiragana and katakana charts in that order with romaji readings', () => {
-        const wrapper = mount(DictionaryView)
+    it('shows the hiragana and katakana charts in that order with romaji readings', async () => {
+        const wrapper = await mountDictionary()
 
         expect(wrapper.findAll('.script-heading').map((heading) => heading.text())).toEqual([
             'Hiragana',
@@ -47,9 +53,11 @@ describe('DictionaryView', () => {
                     }),
             ),
         )
-        const wrapper = mount(DictionaryView)
+        const wrapper = await mountDictionary()
 
         await wrapper.get('#dictionary-tab-vocabulary').trigger('click')
+        await flushPromises()
+        expect(router.currentRoute.value.path).toBe('/dictionary/vocabulary')
 
         expect(wrapper.get('[role="status"]').text()).toBe('Loading dictionary…')
         expect(wrapper.get('.loading-spinner').attributes('aria-hidden')).toBe('true')
@@ -82,7 +90,7 @@ describe('DictionaryView', () => {
                 ]),
             ),
         )
-        const wrapper = mount(DictionaryView)
+        const wrapper = await mountDictionary()
 
         await wrapper.get('#dictionary-tab-vocabulary').trigger('click')
         await flushPromises()
@@ -146,10 +154,11 @@ describe('DictionaryView', () => {
                 return Response.json({ kanjis: {} })
             }),
         )
-        const wrapper = mount(DictionaryView)
+        const wrapper = await mountDictionary()
 
         await wrapper.get('#dictionary-tab-kanji').trigger('click')
         await flushPromises()
+        expect(router.currentRoute.value.path).toBe('/dictionary/kanji')
         const kanjiLevels = wrapper
             .findAll('.kanji-card .level-badge')
             .map((badge) => badge.text())
