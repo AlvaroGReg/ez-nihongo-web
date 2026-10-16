@@ -30,7 +30,9 @@ describe('App', () => {
 
         await wrapper.get('.menu-toggle').trigger('click')
 
-        expect(wrapper.get('.toolbar-brand').text()).toBe('EZ Nihongo')
+        const brand = wrapper.get('.toolbar-brand img')
+        expect(brand.attributes('src')).toMatch(/res\/logos\/ez-nihongo\/logo-horizontal-white\.svg$/)
+        expect(brand.attributes('alt')).toBe('EZ Nihongo')
         expect(wrapper.get('.navigation-menu a').attributes('href')).toBe('#/exercises')
         expect(wrapper.get('.dictionary-link').attributes('href')).toBe('#/dictionary')
         expect(wrapper.get('.navigation-menu a:last-child').attributes('href')).toBe('#/about')
@@ -47,6 +49,6 @@ describe('App', () => {
 
         const shortcut = wrapper.get('.floating-contact-link')
         expect(shortcut.attributes('href')).toBe('#/about')
-        expect(shortcut.get('img').attributes('src')).toMatch(/logos\/agreg_blue\.png$/)
+        expect(shortcut.get('img').attributes('src')).toMatch(/res\/logos\/agreg_blue\.png$/)
     })
 })

@@ -6,6 +6,7 @@ import { locale, setLocale, t } from '@/i18n'
 import { theme, toggleTheme } from '@/stores/theme'
 
 const isMenuOpen = ref(false)
+const basePath = import.meta.env.BASE_URL
 
 function changeLocale(value: string): void {
     if (value === 'en' || value === 'es') setLocale(value)
@@ -43,7 +44,10 @@ function closeMenu(): void {
             </div>
 
             <RouterLink class="toolbar-brand" to="/" @click="closeMenu">
-                {{ t('appTitle') }}
+                <img
+                    :src="`${basePath}res/logos/ez-nihongo/logo-horizontal-white.svg`"
+                    alt="EZ Nihongo"
+                />
             </RouterLink>
 
             <nav class="toolbar-actions" :aria-label="t('toolbar')">
@@ -95,12 +99,17 @@ function closeMenu(): void {
     .toolbar-brand {
         position: absolute;
         left: 50%;
-        color: var(--text);
-        font-size: 1.2rem;
-        font-weight: 800;
+        display: block;
+        width: 9.5rem;
         text-decoration: none;
         transform: translateX(-50%);
         white-space: nowrap;
+
+        img {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
     }
 
     .toolbar-navigation {
@@ -166,7 +175,7 @@ function closeMenu(): void {
         }
 
         .toolbar-brand {
-            font-size: 1rem;
+            width: 8rem;
         }
     }
 
@@ -181,7 +190,7 @@ function closeMenu(): void {
             position: static;
             justify-self: center;
             min-width: 0;
-            font-size: 0.82rem;
+            width: 6.5rem;
             transform: none;
         }
 

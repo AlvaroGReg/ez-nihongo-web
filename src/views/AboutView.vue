@@ -35,7 +35,7 @@ const basePath = import.meta.env.BASE_URL
                         <span>alvaro.gracia.reg@gmail.com</span>
                     </a>
                     <a href="https://alvarogreg.github.io/WebPortfolio/" target="_blank" rel="noreferrer">
-                        <img class="portfolio-icon" :src="`${basePath}logos/portfolio.png`" alt="" />
+                        <img class="portfolio-icon" :src="`${basePath}res/logos/portfolio.png`" alt="" />
                         <span>Portfolio</span>
                     </a>
                 </div>

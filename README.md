@@ -1,4 +1,12 @@
-# ez-nihongo
+<table align="center" border="0" bgcolor="#101936">
+    <tr>
+        <td align="center">
+            <img src="public/res/logos/ez-nihongo/logo-horizontal-white.svg" alt="EZ Nihongo" width="420" />
+        </td>
+    </tr>
+</table>
+
+<br />
 
 Responsive web app for practising Japanese. The interface is available in
 English and Spanish, with light and dark themes.
@@ -9,6 +17,9 @@ The current functional version is **0.9**. It includes:
 
 - Japanese vocabulary exercises for JLPT levels N5 through N1. Choose one or
   more levels and configure a test of 10 to 100 questions.
+- Dictionaries for kana, JLPT vocabulary and kanji. Browse hiragana and
+  katakana charts, or filter vocabulary and kanji entries by JLPT level. Kanji
+  entries include readings and meanings in the selected language.
 - Offline kanji exercises for JLPT levels N5 through N1, with multiple-choice
   reading and meaning questions. Meaning questions offer an optional reading
   hint. N4 and N5 meanings have Spanish translations; N3 through N1 are shown in
@@ -23,10 +34,6 @@ The current functional version is **0.9**. It includes:
 - Bundled JLPT vocabulary and kanji catalogs, so these exercises do not depend
   on the platform API.
 
-## Roadmap to 1.0
-
-- Logos and themes with own personality.
-
 ## GitHub Pages deployment
 
 The `demo-github-pages-offline` branch is automatically built and deployed to
@@ -37,7 +44,8 @@ under **Settings → Pages**.
 Pages publishes a static build of the web client—the SPA, the vocabulary catalog
 at `public/data/jlpt-vocabulary.json`, and the kanji catalogs at
 `public/data/jlpt-kanji/n1.json` through `n5.json`—under the `/ez-nihongo-web/`
-base path. Vocabulary and kanji exercises work without connecting to the API.
+base path. The vocabulary and kanji dictionaries and exercises work without
+connecting to the API.
 The platform API is not deployed to GitHub Pages, so features that require a
 backend are not part of this demo.
 

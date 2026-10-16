@@ -8,7 +8,7 @@ const basePath = import.meta.env.BASE_URL
 
 <template>
     <RouterLink class="floating-contact-link" to="/about" :aria-label="t('about')" :title="t('about')">
-        <img :src="`${basePath}logos/agreg_blue.png`" alt="" />
+        <img :src="`${basePath}res/logos/agreg_blue.png`" alt="" />
     </RouterLink>
 </template>
 
