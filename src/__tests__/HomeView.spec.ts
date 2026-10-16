@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { nextTick } from 'vue'
 
 import { setLocale } from '@/i18n'
 import ExerciseView from '@/views/ExerciseView.vue'
@@ -115,7 +116,11 @@ describe('HomeView', () => {
             'no están traducidos al español',
         )
         expect(wrapper.get('.form-grid').classes()).toContain('kanji-warning-visible')
+
         setLocale('en')
+        await nextTick()
+        expect(wrapper.find('.kanji-translation-notice').exists()).toBe(false)
+        expect(wrapper.get('.form-grid').classes()).not.toContain('kanji-warning-visible')
     })
 
     it('explains the conversion exercise and how kana selections work', async () => {

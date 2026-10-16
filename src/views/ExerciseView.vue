@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
-import { t } from '@/i18n'
+import { locale, t } from '@/i18n'
 import { kanaEntries, kanaTypes, selectKanaEntries } from '@/services/kana'
 import { testSession } from '@/stores/testSession'
 import type { KanaDirection, KanaRow, KanaScript, KanaType, JlptLevel } from '@/types/domain'
@@ -32,10 +32,12 @@ const isKanaExercise = computed(() => exerciseType.value === 'kana')
 const isKanjiExercise = computed(() => exerciseType.value === 'kanji')
 const displayedLevels = computed(() => levels)
 const untranslatedKanjiLevels = computed(() =>
-    selectedKanjiLevels.value
-        .filter((level) => level <= 3)
-        .sort((left, right) => right - left)
-        .map((level) => `N${level}`),
+    locale.value === 'es'
+        ? selectedKanjiLevels.value
+              .filter((level) => level <= 3)
+              .sort((left, right) => right - left)
+              .map((level) => `N${level}`)
+        : [],
 )
 const selectedContentLevels = computed({
     get: () => (isKanjiExercise.value ? selectedKanjiLevels.value : selectedLevels.value),

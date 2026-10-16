@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
+import { nextTick } from 'vue'
 
 import kanjiN5 from '../../public/data/jlpt-kanji/n5.json'
 import { locale, setLocale } from '@/i18n'
@@ -155,6 +156,13 @@ describe('DictionaryView', () => {
         expect([...new Set(kanjiLevels)]).toEqual(['JLPT N5', 'JLPT N4'])
         expect(wrapper.get('.translation-notice').text()).toContain('N3, N2, N1')
         expect(wrapper.get('.translation-notice').text()).toContain('no están traducidos al español')
+
+        setLocale('en')
+        await nextTick()
+        expect(wrapper.get('.translation-notice').text()).toBe('')
+        expect(wrapper.get('.translation-notice').attributes('aria-hidden')).toBe('true')
+        setLocale('es')
+
         for (const level of [1, 2, 3, 4]) {
             await wrapper.get(`input[value="${level}"]`).setValue(false)
         }

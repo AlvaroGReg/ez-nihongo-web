@@ -5,7 +5,7 @@ import DictionaryLevelFilter from '@/components/dictionary/DictionaryLevelFilter
 import DictionaryLoading from '@/components/dictionary/DictionaryLoading.vue'
 import KanjiCard from '@/components/dictionary/KanjiCard.vue'
 import KanjiDetailsDialog from '@/components/dictionary/KanjiDetailsDialog.vue'
-import { t } from '@/i18n'
+import { locale, t } from '@/i18n'
 import { loadKanjiCatalog, type KanjiRecord } from '@/services/kanji'
 import type { JlptLevel } from '@/types/domain'
 
@@ -22,10 +22,12 @@ const visibleEntries = computed(() =>
         .sort((left, right) => right.jlpt - left.jlpt),
 )
 const untranslatedLevels = computed(() =>
-    selectedLevels.value
-        .filter((level) => level <= 3)
-        .sort((left, right) => right - left)
-        .map((level) => `N${level}`),
+    locale.value === 'es'
+        ? selectedLevels.value
+              .filter((level) => level <= 3)
+              .sort((left, right) => right - left)
+              .map((level) => `N${level}`)
+        : [],
 )
 
 onMounted(async () => {
