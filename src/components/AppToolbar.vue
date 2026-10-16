@@ -45,7 +45,7 @@ function closeMenu(): void {
 
             <RouterLink class="toolbar-brand" to="/" @click="closeMenu">
                 <img
-                    :src="`${basePath}res/logos/ez-nihongo/logo-horizontal-white.svg`"
+                    :src="`${basePath}res/logos/ez-nihongo/logo-horizontal-${theme === 'light' ? 'blue' : 'white'}.svg`"
                     alt="EZ Nihongo"
                 />
             </RouterLink>
@@ -100,7 +100,7 @@ function closeMenu(): void {
         position: absolute;
         left: 50%;
         display: block;
-        width: 9.5rem;
+        width: 7.125rem;
         text-decoration: none;
         transform: translateX(-50%);
         white-space: nowrap;
@@ -175,7 +175,7 @@ function closeMenu(): void {
         }
 
         .toolbar-brand {
-            width: 8rem;
+            width: 6rem;
         }
     }
 
@@ -190,7 +190,7 @@ function closeMenu(): void {
             position: static;
             justify-self: center;
             min-width: 0;
-            width: 6.5rem;
+            width: 4.875rem;
             transform: none;
         }
 

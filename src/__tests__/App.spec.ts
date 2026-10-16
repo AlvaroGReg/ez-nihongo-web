@@ -31,12 +31,28 @@ describe('App', () => {
         await wrapper.get('.menu-toggle').trigger('click')
 
         const brand = wrapper.get('.toolbar-brand img')
-        expect(brand.attributes('src')).toMatch(/res\/logos\/ez-nihongo\/logo-horizontal-white\.svg$/)
+        expect(brand.attributes('src')).toMatch(/res\/logos\/ez-nihongo\/logo-horizontal-blue\.svg$/)
         expect(brand.attributes('alt')).toBe('EZ Nihongo')
         expect(wrapper.get('.navigation-menu a').attributes('href')).toBe('#/exercises')
         expect(wrapper.get('.dictionary-link').attributes('href')).toBe('#/dictionary')
         expect(wrapper.get('.navigation-menu a:last-child').attributes('href')).toBe('#/about')
         expect(wrapper.get('.navigation-menu a:last-child').text()).toBe('About')
+    })
+
+    it('switches the header logo variant with the theme', async () => {
+        const wrapper = mount(App, {
+            global: {
+                plugins: [router],
+                stubs: { RouterView: true },
+            },
+        })
+
+        const brand = wrapper.get('.toolbar-brand img')
+        expect(brand.attributes('src')).toMatch(/logo-horizontal-blue\.svg$/)
+
+        await wrapper.get('.theme-toggle').trigger('click')
+
+        expect(brand.attributes('src')).toMatch(/logo-horizontal-white\.svg$/)
     })
 
     it('keeps the floating shortcut available and links to About', () => {
