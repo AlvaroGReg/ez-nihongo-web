@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 
 import DictionaryLevelFilter from '@/components/dictionary/DictionaryLevelFilter.vue'
+import DictionaryLoading from '@/components/dictionary/DictionaryLoading.vue'
 import KanjiCard from '@/components/dictionary/KanjiCard.vue'
 import KanjiDetailsDialog from '@/components/dictionary/KanjiDetailsDialog.vue'
 import { t } from '@/i18n'
@@ -12,6 +13,7 @@ const levels: JlptLevel[] = [1, 2, 3, 4, 5]
 const selectedLevels = ref<JlptLevel[]>([5, 4, 3, 2, 1])
 const catalog = ref<KanjiRecord[]>([])
 const selectedKanji = ref<KanjiRecord | null>(null)
+const isLoading = ref(true)
 const loadError = ref(false)
 
 const visibleEntries = computed(() =>
@@ -31,6 +33,8 @@ onMounted(async () => {
         catalog.value = (await Promise.all(levels.map((level) => loadKanjiCatalog(level)))).flat()
     } catch {
         loadError.value = true
+    } finally {
+        isLoading.value = false
     }
 })
 </script>
@@ -49,7 +53,8 @@ onMounted(async () => {
             </template>
             <span v-else aria-hidden="true">&nbsp;</span>
         </p>
-        <p v-if="loadError" class="load-error" role="alert">{{ t('providerCatalogError') }}</p>
+        <DictionaryLoading v-if="isLoading" />
+        <p v-else-if="loadError" class="load-error" role="alert">{{ t('providerCatalogError') }}</p>
         <p v-else-if="visibleEntries.length === 0" class="empty-state">
             {{ t('dictionaryNoEntries') }}
         </p>

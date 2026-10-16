@@ -35,6 +35,29 @@ describe('DictionaryView', () => {
         expect(wrapper.find('.kana-cell-basic .kana-glyph').text()).toBe('あ')
     })
 
+    it('shows an animated loading status while a dictionary catalog is pending', async () => {
+        let rejectCatalog!: (error: Error) => void
+        vi.stubGlobal(
+            'fetch',
+            vi.fn<typeof fetch>(
+                () =>
+                    new Promise<Response>((_resolve, reject) => {
+                        rejectCatalog = reject
+                    }),
+            ),
+        )
+        const wrapper = mount(DictionaryView)
+
+        await wrapper.get('#dictionary-tab-vocabulary').trigger('click')
+
+        expect(wrapper.get('[role="status"]').text()).toBe('Loading dictionary…')
+        expect(wrapper.get('.loading-spinner').attributes('aria-hidden')).toBe('true')
+
+        rejectCatalog(new Error('Catalog unavailable'))
+        await flushPromises()
+        expect(wrapper.find('.dictionary-loading').exists()).toBe(false)
+    })
+
     it('shows vocabulary records and filters them by JLPT level', async () => {
         setLocale('es')
         vi.stubGlobal(
