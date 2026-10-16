@@ -13,8 +13,6 @@ English and Spanish, with light and dark themes.
 
 ## Project status
 
-The current functional version is **0.9**. It includes:
-
 - Japanese vocabulary exercises for JLPT levels N5 through N1. Choose one or
   more levels and configure a test of 10 to 100 questions.
 - Dictionaries for kana, JLPT vocabulary and kanji. Browse hiragana and
