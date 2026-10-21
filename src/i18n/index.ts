@@ -60,6 +60,8 @@ const english = {
     kanjiMeaningExercise: 'Kanji meaning',
     kanjiSpanishUnavailable:
         'Spanish translations are not available for kanji in {levels}; meanings will be shown in English.',
+    kanjiProfessionalWarning:
+        'The kanji section has not been approved by Japanese language teaching professionals and is not recommended for use in its current state. We will work to improve it.',
     kanjiReadingPrompt: 'Kanji N{levels} · Reading',
     kanjiMeaningPrompt: 'Kanji N{levels} · Meaning',
     chooseReading: 'Choose the reading',
@@ -225,6 +227,8 @@ const spanish: Partial<Record<TranslationKey, string>> = {
     kanjiMeaningExercise: 'Significado de kanji',
     kanjiSpanishUnavailable:
         'Los significados de los kanji de {levels} no están traducidos al español; se mostrarán en inglés.',
+    kanjiProfessionalWarning:
+        'La sección de kanji no ha sido aprobada por profesionales de la enseñanza de japonés y no se recomienda usar en su estado actual. Trabajaremos para mejorarla.',
     kanjiReadingPrompt: 'Kanji N{levels} · Lectura',
     kanjiMeaningPrompt: 'Kanji N{levels} · Significado',
     chooseReading: 'Elige la lectura',

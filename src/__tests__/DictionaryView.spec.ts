@@ -159,6 +159,9 @@ describe('DictionaryView', () => {
         await wrapper.get('#dictionary-tab-kanji').trigger('click')
         await flushPromises()
         expect(router.currentRoute.value.path).toBe('/dictionary/kanji')
+        expect(wrapper.get('.kanji-warning-toast').text()).toBe(
+            'La sección de kanji no ha sido aprobada por profesionales de la enseñanza de japonés y no se recomienda usar en su estado actual. Trabajaremos para mejorarla.',
+        )
         const kanjiLevels = wrapper
             .findAll('.kanji-card .level-badge')
             .map((badge) => badge.text())

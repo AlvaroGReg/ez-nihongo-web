@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
+import KanjiWarningToast from '@/components/KanjiWarningToast.vue'
 import { locale, t } from '@/i18n'
 import { kanaEntries, kanaTypes, selectKanaEntries } from '@/services/kana'
 import { testSession } from '@/stores/testSession'
@@ -358,6 +359,7 @@ function backToSetup(): void {
 </script>
 
 <template>
+    <KanjiWarningToast :active="isKanjiExercise" />
     <main class="page-shell setup-page">
         <section class="hero-card" aria-labelledby="app-title">
             <p class="eyebrow">{{ t('appEyebrow') }}</p>

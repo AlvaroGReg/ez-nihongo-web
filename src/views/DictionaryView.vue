@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
+import KanjiWarningToast from '@/components/KanjiWarningToast.vue'
 import KanjiDictionary from '@/components/dictionary/KanjiDictionary.vue'
 import KanaDictionary from '@/components/dictionary/KanaDictionary.vue'
 import VocabularyDictionary from '@/components/dictionary/VocabularyDictionary.vue'
@@ -26,6 +27,7 @@ const tabs: Array<{ id: DictionaryTab; label: string }> = [
 </script>
 
 <template>
+    <KanjiWarningToast :active="activeTab === 'kanji'" />
     <main class="page-shell dictionary-page">
         <header class="dictionary-header">
             <p class="eyebrow">{{ t('dictionary') }}</p>
