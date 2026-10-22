@@ -1,29 +1,25 @@
-# Instrucciones locales de ez-nihongo
+# Web repository instructions
 
-Estas reglas complementan el contexto común de `../AGENTS.md`.
+These instructions supplement the shared workspace guidance in `../AGENTS.md`.
 
-## Proyecto
+## Project
 
-- Es una aplicación Vue 3 con Vite, TypeScript y Vue Router.
-- Las especificaciones propias de este repositorio viven en `specs/<feature>/`, organizadas por funcionalidad y no por versión.
-- Mantén los cambios pequeños y respeta la estructura existente.
+- This repository is a Vue 3 single-page application built with TypeScript, Vite, and Vue Router.
+- Feature specifications live in `specs/<feature>/`, organized by feature rather than release version.
+- Keep changes focused and follow the existing structure and patterns.
 
-## Estilos CSS
+## CSS
 
-- Todo el CSS nuevo o modificado debe seguir el patrón de anidación CSS nativa
-  para agrupar reglas relacionadas y evitar repetir selectores ancestros.
-- Como guía flexible, procura no superar tres niveles de profundidad. Un cuarto
-  nivel es aceptable, pero evítalo si no reduce repetición ni hace el código más
-  conciso.
+- Use native CSS nesting for new or modified styles to group related rules and avoid repeating ancestor selectors.
+- As a flexible guideline, keep nesting to three levels or fewer. A fourth level is acceptable when it reduces repetition or improves clarity.
 
-## Flujo de trabajo
+## Workflow
 
-- Instala dependencias con `npm install` si faltan.
-- Usa `npm run dev` para desarrollo.
-- Antes de entregar, ejecuta según corresponda:
+- Install dependencies with `npm install` if they are missing.
+- Use `npm run dev` to start the development server.
+- Before handing off web changes, run the applicable checks:
   - `npm run type-check`
-  - `npm run test:unit`
+  - `npm run test:unit -- --run`
   - `npm run build`
-  - `npm run lint` y `npm run format` solo si la tarea lo requiere; ambos
-    pueden modificar archivos.
-- Revisa siempre `git diff` y `git status` después de editar.
+  - Run `npm run lint` or `npm run format` only when needed; both may modify files.
+- Review `git diff` and `git status` after editing.

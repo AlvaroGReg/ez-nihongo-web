@@ -11,52 +11,52 @@
 Responsive web app for practising Japanese. The interface is available in
 English and Spanish, with light and dark themes.
 
-## Project status
+## Features
 
-- Japanese vocabulary exercises for JLPT levels N5 through N1. Choose one or
-  more levels and configure a test of 10 to 100 questions.
-- Dictionaries for kana, JLPT vocabulary and kanji. Browse hiragana and
-  katakana charts, or filter vocabulary and kanji entries by JLPT level. Kanji
-  entries include readings and meanings in the selected language.
-- Offline kanji exercises for JLPT levels N5 through N1, with multiple-choice
-  reading and meaning questions. Meaning questions offer an optional reading
-  hint. N4 and N5 meanings have Spanish translations; N3 through N1 are shown in
-  English.
-- Hiragana and katakana practice, with selectable scripts, rows and kana types.
-  Exercises include kana-to-romaji, romaji-to-kana and hiragana-katakana
-  conversion.
-- Answer checking and feedback during exercises, session progress, a final
-  score and a review of mistakes.
-- English and Spanish interface, a persistent language preference, and light
-  and dark themes.
-- Bundled JLPT vocabulary and kanji catalogs, so these exercises do not depend
-  on the platform API.
+- Vocabulary tests for JLPT N5–N1. Select one or more levels and configure 10 to
+  100 questions.
+- Dictionaries for hiragana, katakana, JLPT vocabulary, and kanji. Filter
+  vocabulary and kanji by level; kanji entries include readings and meanings.
+- Kanji exercises for JLPT N5–N1 with multiple-choice reading and meaning
+  questions. Meaning questions can show a reading hint. Spanish meanings are
+  available for N4 and N5; N3–N1 meanings are in English.
+- Kana practice with selectable scripts, rows, and kana types. Exercise modes
+  include kana-to-romaji, romaji-to-kana, and hiragana/katakana conversion.
+- Immediate answer feedback, session progress, final scores, and review of
+  incorrect answers.
+- Account registration and sign-in, including optional persistent login.
+- Authenticated vocabulary exercise attempts and a learner progress view backed
+  by the platform API.
+- English and Spanish interface, saved language preference, and light and dark
+  themes.
 
-## GitHub Pages deployment
+## Catalogs and backend requirements
 
-The `demo-github-pages-offline` branch is automatically built and deployed to
-GitHub Pages on every push. The workflow can also be run manually from GitHub
-Actions. For the first deployment, set the Pages source to **GitHub Actions**
-under **Settings → Pages**.
+Vocabulary and kanji JSON catalogs are bundled under `public/data/`. Dictionaries
+and local exercises can use these files without the platform API. Unauthenticated
+vocabulary tests use the bundled catalog. Signed-in vocabulary tests load from
+the API so their attempts can be associated with the account. Account and
+server-backed progress features also require the platform API and PostgreSQL.
 
-Pages publishes a static build of the web client—the SPA, the vocabulary catalog
-at `public/data/jlpt-vocabulary.json`, and the kanji catalogs at
-`public/data/jlpt-kanji/n1.json` through `n5.json`—under the `/ez-nihongo-web/`
-base path. The vocabulary and kanji dictionaries and exercises work without
-connecting to the API.
-The platform API is not deployed to GitHub Pages, so features that require a
-backend are not part of this demo.
+Kanji exercises and dictionaries use the bundled kanji catalogs. The web app
+does not require the API for those activities.
 
 ## Development
 
-Install dependencies and start the local development server:
+Use Node.js `^22.18.0 || >=24.12.0` and npm, as declared by `package.json`. Then
+install dependencies and start the Vite development server:
 
 ```sh
-npm i
+npm install
 npm run dev
 ```
 
-Useful checks:
+By default, Vite serves the app at <http://localhost:5173> and proxies `/api`
+requests to `http://localhost:5080`. Start the platform API for backend-dependent
+features, or run the complete stack using the workspace's
+[Docker development instructions](../README.md#run-the-docker-development-stack).
+
+Run the applicable checks from this repository root:
 
 ```sh
 npm run type-check
@@ -64,17 +64,18 @@ npm run test:unit -- --run
 npm run build
 ```
 
-Vocabulary is loaded from the
-[`ez-nihongo-platform`](https://github.com/AlvaroGReg/ez-nihongo-platform)
-ASP.NET Core API at `/api/v1/vocabulary`. For local development, the Vite dev
-server proxies API requests to `http://localhost:5080`; run the platform API or
-start the complete workspace with `deploy.ps1`.
+The regular build uses `/ez-nihongo/` as its base path. Set `VITE_BASE_PATH=/`
+for a root-path build; the workspace Docker build already does this.
 
-The app keeps the `/ez-nihongo/` base path for GitHub Pages builds. The
-workspace Docker build overrides it to `/` for the combined web/API stack.
+## GitHub Pages demo
 
-The `demo-github-pages-offline` branch deploys to GitHub Pages on every push.
-To enable its first deployment, set the repository's Pages source to **GitHub
-Actions** in **Settings → Pages**. The demo toolbar omits account controls and
-vocabulary and kanji exercises use the bundled catalogs without requiring the
-API.
+The `demo-github-pages-offline` branch is deployed to GitHub Pages on each push
+and can also be deployed manually from GitHub Actions. For the first deployment,
+set the repository's Pages source to **GitHub Actions** under **Settings →
+Pages**.
+
+The workflow builds a static SPA under `/ez-nihongo-web/` and publishes the
+bundled vocabulary and kanji catalogs. Catalog-backed dictionaries and exercises
+work offline. The API is not deployed to Pages, so registration, sign-in, and
+server-backed progress features are unavailable in this demo. The demo toolbar
+also omits account controls.
