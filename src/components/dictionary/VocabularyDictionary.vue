@@ -3,12 +3,15 @@ import { computed, onMounted, ref } from 'vue'
 
 import DictionaryLevelFilter from '@/components/dictionary/DictionaryLevelFilter.vue'
 import DictionaryLoading from '@/components/dictionary/DictionaryLoading.vue'
+import TextSearchField from '@/components/TextSearchField.vue'
 import VocabularyCard from '@/components/dictionary/VocabularyCard.vue'
-import { t } from '@/i18n'
+import { locale, t } from '@/i18n'
 import { loadLocalCatalog, type CatalogEntry } from '@/services/vocabulary'
 import type { JlptLevel } from '@/types/domain'
+import { includesSearchText } from '@/utils/textSearch'
 
 const selectedLevels = ref<JlptLevel[]>([5, 4, 3, 2, 1])
+const searchQuery = ref('')
 const catalog = ref<CatalogEntry[]>([])
 const isLoading = ref(true)
 const loadError = ref(false)
@@ -16,6 +19,17 @@ const loadError = ref(false)
 const visibleEntries = computed(() =>
     catalog.value
         .filter((entry) => selectedLevels.value.includes(entry.level))
+        .filter((entry) =>
+            includesSearchText(
+                [
+                    entry.word,
+                    entry.furigana,
+                    entry.romaji,
+                    entry.meaning[locale.value] || entry.meaning.en,
+                ],
+                searchQuery.value,
+            ),
+        )
         .sort((left, right) => right.level - left.level),
 )
 
@@ -33,10 +47,12 @@ onMounted(async () => {
 <template>
     <div class="catalog-dictionary">
         <DictionaryLevelFilter v-model="selectedLevels" />
+        <TextSearchField v-model="searchQuery" />
         <DictionaryLoading v-if="isLoading" />
         <p v-else-if="loadError" class="load-error" role="alert">{{ t('providerCatalogError') }}</p>
         <p v-else-if="visibleEntries.length === 0" class="empty-state">
-            {{ t('dictionaryNoEntries') }}
+            <template v-if="searchQuery.trim()">{{ t('searchNoResults') }}</template>
+            <template v-else>{{ t('dictionaryNoEntries') }}</template>
         </p>
         <ul v-else class="card-grid">
             <li v-for="entry in visibleEntries" :key="entry.contentId ?? `${entry.level}-${entry.word}-${entry.furigana}`">
