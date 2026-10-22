@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 
-import { locale, t } from '@/i18n'
+import { t } from '@/i18n'
 import type { VocabularyAttempt } from '@/services/vocabularyProgress'
 import type { CatalogEntry } from '@/services/vocabulary'
 import type { JlptLevel } from '@/types/domain'
@@ -11,19 +11,63 @@ export interface VocabularyProgressRow {
     entry?: CatalogEntry
 }
 
+interface VocabularyWordProgress {
+    contentId: string
+    attempts: VocabularyAttempt[]
+    entry?: CatalogEntry
+}
+
 const props = defineProps<{ rows: VocabularyProgressRow[] }>()
 const selectedLevel = ref<'all' | JlptLevel>('all')
+const wordProgress = computed(() => {
+    const grouped = new Map<string, VocabularyWordProgress>()
+    const orderedAttempts = [...props.rows].sort(
+        (left, right) => Date.parse(right.attempt.createdAt) - Date.parse(left.attempt.createdAt),
+    )
+
+    for (const row of orderedAttempts) {
+        let progress = grouped.get(row.attempt.contentId)
+        if (!progress) {
+            progress = { contentId: row.attempt.contentId, attempts: [], entry: row.entry }
+            grouped.set(row.attempt.contentId, progress)
+        }
+        progress.attempts.push(row.attempt)
+    }
+
+    return [...grouped.values()]
+})
 const visibleRows = computed(() =>
     selectedLevel.value === 'all'
-        ? props.rows
-        : props.rows.filter((row) => row.entry?.level === selectedLevel.value),
+        ? wordProgress.value
+        : wordProgress.value.filter((row) => row.entry?.level === selectedLevel.value),
 )
 
 function formatDate(value: string): string {
-    return new Intl.DateTimeFormat(locale.value, {
-        dateStyle: 'medium',
-        timeStyle: 'short',
+    return new Intl.DateTimeFormat('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
     }).format(new Date(value))
+}
+
+function outcomeBars(progress: VocabularyWordProgress): Array<'correct' | 'incorrect' | 'empty'> {
+    const recentAttempts = progress.attempts.slice(0, 5)
+    const correctCount = recentAttempts.filter((attempt) => attempt.correct).length
+    const incorrectCount = recentAttempts.length - correctCount
+    const bars: Array<'correct' | 'incorrect' | 'empty'> = Array(5).fill('empty')
+
+    for (let index = 0; index < correctCount; index += 1) bars[index] = 'correct'
+    for (let index = 0; index < incorrectCount; index += 1) bars[4 - index] = 'incorrect'
+
+    return bars
+}
+
+function outcomeLabel(progress: VocabularyWordProgress): string {
+    const recentAttempts = progress.attempts.slice(0, 5).reverse()
+    const results = recentAttempts.map((attempt) =>
+        attempt.correct ? t('progressCorrect') : t('progressIncorrect'),
+    )
+    return `${t('progressResult')}: ${results.join(', ')}`
 }
 </script>
 
@@ -39,7 +83,7 @@ function formatDate(value: string): string {
             </select>
         </label>
 
-        <p v-if="rows.length === 0" class="progress-empty">{{ t('noProgress') }}</p>
+        <p v-if="wordProgress.length === 0" class="progress-empty">{{ t('noProgress') }}</p>
         <p v-else-if="visibleRows.length === 0" class="progress-empty">
             {{ t('noFilteredProgress') }}
         </p>
@@ -47,23 +91,27 @@ function formatDate(value: string): string {
             <table class="progress-table">
                 <thead>
                     <tr>
-                        <th scope="col">{{ t('progressDate') }}</th>
                         <th scope="col">{{ t('progressWord') }}</th>
                         <th scope="col">{{ t('progressLevel') }}</th>
+                        <th scope="col">{{ t('progressDate') }}</th>
                         <th scope="col">{{ t('progressResult') }}</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="row in visibleRows" :key="row.attempt.eventId">
-                        <td>{{ formatDate(row.attempt.createdAt) }}</td>
-                        <td>{{ row.entry?.word ?? row.attempt.contentId }}</td>
+                    <tr v-for="row in visibleRows" :key="row.contentId">
+                        <td>{{ row.entry?.word ?? row.contentId }}</td>
                         <td>{{ row.entry ? `N${row.entry.level}` : '—' }}</td>
                         <td>
-                            <span
-                                class="progress-outcome"
-                                :class="row.attempt.correct ? 'is-correct' : 'is-incorrect'"
-                            >
-                                {{ row.attempt.correct ? t('progressCorrect') : t('progressIncorrect') }}
+                            {{ formatDate(row.attempts[0]!.createdAt) }}
+                        </td>
+                        <td>
+                            <span class="progress-outcomes" role="img" :aria-label="outcomeLabel(row)">
+                                <span
+                                    v-for="(outcome, index) in outcomeBars(row)"
+                                    :key="index"
+                                    class="progress-outcome-bar"
+                                    :class="`is-${outcome}`"
+                                />
                             </span>
                         </td>
                     </tr>
@@ -98,6 +146,7 @@ function formatDate(value: string): string {
 
     .progress-table {
         width: 100%;
+        table-layout: fixed;
         border-collapse: collapse;
         text-align: left;
 
@@ -119,15 +168,24 @@ function formatDate(value: string): string {
         }
     }
 
-    .progress-outcome {
-        font-weight: 700;
+    .progress-outcomes {
+        display: inline-flex;
+        gap: 0.2rem;
+        vertical-align: middle;
+    }
+
+    .progress-outcome-bar {
+        width: 1.5rem;
+        height: 0.25rem;
+        border-radius: 999px;
+        background: var(--border);
 
         &.is-correct {
-            color: var(--success-text);
+            background: var(--success-text);
         }
 
         &.is-incorrect {
-            color: var(--error-text);
+            background: var(--error-text);
         }
     }
 }
