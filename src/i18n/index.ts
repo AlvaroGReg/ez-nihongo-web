@@ -168,6 +168,7 @@ const english = {
     registerTitle: 'Create your account',
     loginDescription: 'Sign in to your EZ Nihongo account.',
     registerDescription: 'Create an account to get started with EZ Nihongo.',
+    rememberMe: 'Remember me (up to 30 days)',
     email: 'Email address',
     password: 'Password',
     passwordRequirements:
@@ -354,6 +355,7 @@ const spanish: Partial<Record<TranslationKey, string>> = {
     registerTitle: 'Crea tu cuenta',
     loginDescription: 'Inicia sesión en tu cuenta de EZ Nihongo.',
     registerDescription: 'Crea una cuenta para empezar a usar EZ Nihongo.',
+    rememberMe: 'Recordarme (hasta 30 días)',
     email: 'Correo electrónico',
     password: 'Contraseña',
     passwordRequirements: 'Usa al menos 6 caracteres, con mayúscula, minúscula, número y símbolo.',

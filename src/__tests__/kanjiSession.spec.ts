@@ -52,6 +52,7 @@ describe('offline kanji sessions', () => {
         window.localStorage.clear()
         vi.restoreAllMocks()
         vi.unstubAllGlobals()
+        auth.signOut()
         vi.stubGlobal(
             'fetch',
             vi.fn<typeof fetch>().mockImplementation(async (input) => {
@@ -60,7 +61,6 @@ describe('offline kanji sessions', () => {
             }),
         )
         setLocale('en')
-        auth.signOut()
     })
 
     it('loads N5 questions offline and prioritizes a missed choice on the next question', async () => {

@@ -6,7 +6,7 @@ import { auth } from './stores/auth'
 import './style.css'
 
 testSession.restoreSession()
-auth.restoreSession()
+await auth.restoreSession()
 
 const app = createApp(App)
 

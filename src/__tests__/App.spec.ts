@@ -20,8 +20,8 @@ describe('App', () => {
         expect(wrapper.get('a[href="#/auth"]').attributes('aria-label')).toBe(
             'Log in or create account',
         )
-        expect(wrapper.get('.toolbar-actions').element.children[0]?.tagName).toBe('A')
-        expect(wrapper.get('.toolbar-actions').element.children[1]?.tagName).toBe('LABEL')
+        expect(wrapper.get('.toolbar-actions').element.children[0]?.tagName).toBe('LABEL')
+        expect(wrapper.get('.toolbar-actions').element.children[1]?.tagName).toBe('BUTTON')
         expect(wrapper.find('select').element).toBeDefined()
         expect(wrapper.find('button[aria-label="Switch to dark theme"]').element).toBeDefined()
     })

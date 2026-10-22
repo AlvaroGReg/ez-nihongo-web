@@ -11,6 +11,7 @@ const router = useRouter()
 const isRegister = ref(route.query.mode === 'register')
 const isSubmitting = ref(false)
 const error = ref('')
+const rememberMe = ref(false)
 const form = reactive({ email: '', password: '' })
 
 async function submit(): Promise<void> {
@@ -21,6 +22,7 @@ async function submit(): Promise<void> {
             isRegister.value ? 'register' : 'login',
             form.email.trim(),
             form.password,
+            rememberMe.value,
         )
         auth.saveSession(session)
         const redirect = route.query.redirect
@@ -32,6 +34,7 @@ async function submit(): Promise<void> {
     } catch (cause) {
         error.value = cause instanceof AuthApiError ? cause.code : 'authUnknownError'
     } finally {
+        form.password = ''
         isSubmitting.value = false
     }
 }
@@ -39,6 +42,7 @@ async function submit(): Promise<void> {
 function toggleMode(): void {
     isRegister.value = !isRegister.value
     error.value = ''
+    rememberMe.value = false
 }
 </script>
 
@@ -76,6 +80,10 @@ function toggleMode(): void {
                         required
                     />
                 </label>
+                <label v-if="!isRegister" class="remember-me-field">
+                    <input v-model="rememberMe" type="checkbox" name="rememberMe" />
+                    <span>{{ t('rememberMe') }}</span>
+                </label>
                 <p v-if="isRegister" class="auth-hint">{{ t('passwordRequirements') }}</p>
                 <p v-if="error" class="message message-error" role="alert">{{ t(error) }}</p>
                 <button class="button button-primary button-wide" type="submit" :disabled="isSubmitting">
@@ -111,6 +119,23 @@ function toggleMode(): void {
     color: var(--muted);
     font-size: 0.9rem;
     line-height: 1.5;
+}
+
+.remember-me-field {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    color: var(--muted);
+    font-size: 0.9rem;
+
+    input {
+        width: 1rem;
+        height: 1rem;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+    }
 }
 
 .auth-switch {

@@ -1,6 +1,12 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { auth, AUTH_SESSION_KEY } from '@/stores/auth'
+import { refreshAuthentication, revokeAuthentication } from '@/services/authApi'
+import { auth } from '@/stores/auth'
+
+vi.mock('@/services/authApi', () => ({
+    refreshAuthentication: vi.fn(),
+    revokeAuthentication: vi.fn(),
+}))
 
 const session = {
     user: { id: 'user-1', email: 'learner@example.com' },
@@ -11,27 +17,54 @@ const session = {
 
 describe('authentication state', () => {
     beforeEach(() => {
-        auth.signOut()
+        auth.state.user = null
+        auth.state.accessToken = null
+        auth.state.tokenType = null
+        auth.state.expiresAt = null
+        vi.mocked(refreshAuthentication).mockReset()
+        vi.mocked(revokeAuthentication).mockReset()
+        vi.mocked(revokeAuthentication).mockResolvedValue()
         window.localStorage.clear()
     })
 
-    it('persists and restores a valid session', () => {
-        window.localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(session))
-        auth.restoreSession()
+    it('restores a session through the refresh endpoint into memory', async () => {
+        window.localStorage.setItem(
+            'ez-nihongo:auth-session:v1',
+            JSON.stringify({ ...session, accessToken: 'old-token' }),
+        )
+        vi.mocked(refreshAuthentication).mockResolvedValue(session)
+
+        await auth.restoreSession()
 
         expect(auth.state.user).toEqual(session.user)
         expect(auth.state.accessToken).toBe(session.accessToken)
+        expect(window.localStorage.length).toBe(0)
     })
 
-    it('discards expired sessions', () => {
-        window.localStorage.setItem(
-            AUTH_SESSION_KEY,
-            JSON.stringify({ ...session, expiresAt: '2000-01-01T00:00:00Z' }),
-        )
+    it('keeps newly authenticated access tokens out of browser storage', () => {
+        auth.saveSession(session)
 
-        auth.restoreSession()
+        expect(window.localStorage.length).toBe(0)
+        expect(auth.state.accessToken).toBe(session.accessToken)
+    })
+
+    it('continues anonymously when the persistent session is invalid', async () => {
+        vi.mocked(refreshAuthentication).mockResolvedValue(null)
+
+        await auth.restoreSession()
 
         expect(auth.state.user).toBeNull()
-        expect(window.localStorage.getItem(AUTH_SESSION_KEY)).toBeNull()
+        expect(auth.state.accessToken).toBeNull()
+    })
+
+    it('immediately clears memory and revokes the server session on sign out', async () => {
+        auth.saveSession(session)
+        vi.mocked(revokeAuthentication).mockRejectedValue(new Error('offline'))
+
+        await expect(auth.signOut()).resolves.toBeUndefined()
+
+        expect(auth.state.user).toBeNull()
+        expect(auth.state.accessToken).toBeNull()
+        expect(revokeAuthentication).toHaveBeenCalledOnce()
     })
 })
