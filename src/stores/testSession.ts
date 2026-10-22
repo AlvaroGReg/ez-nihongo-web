@@ -3,6 +3,8 @@ import { computed, reactive, type ComputedRef } from 'vue'
 import { VocabularyContentError, localVocabularyProvider } from '@/services/vocabulary'
 import { locale } from '@/i18n'
 import { createVocabularyContentId } from '@/services/content'
+import { recordVocabularyAttempt } from '@/services/vocabularyProgress'
+import { auth } from '@/stores/auth'
 import type { ContentProvider, LoadQuestions } from '@/services/contentProvider'
 import { isRomajiCorrect } from '@/services/romaji'
 import { createKanaQuestions } from '@/services/kana'
@@ -202,6 +204,17 @@ export function createTestSessionStore(
         session.attempts ??= []
         session.attempts.push(attempt)
         saveActiveSession(session)
+        if (session.contentType === 'vocabulary' && auth.state.accessToken) {
+            void recordVocabularyAttempt({
+                eventId: attempt.eventId,
+                sessionId: attempt.sessionId,
+                contentId: attempt.contentId,
+                exerciseType,
+                correct: attempt.correct,
+            }).catch((error: unknown) => {
+                console.error('Unable to record vocabulary progress', error)
+            })
+        }
         return true
     }
 

@@ -58,6 +58,63 @@ describe('test session store', () => {
         expect(secondStore.state.needsResume).toBe(true)
     })
 
+    it('sends authenticated vocabulary attempts without blocking the answer flow', async () => {
+        auth.saveSession({
+            user: { id: 'learner-1', email: 'learner@example.com' },
+            accessToken: 'access-token',
+            tokenType: 'Bearer',
+            expiresAt: new Date(Date.now() + 60_000).toISOString(),
+        })
+        const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 204 }))
+        vi.stubGlobal('fetch', fetchMock)
+        const store = createTestSessionStore(async () => ({ questions, levelsUsed: [5] }))
+        await store.startTest(config)
+
+        expect(store.submitAnswer('neko')).toBe(true)
+        expect(fetchMock).toHaveBeenCalledTimes(1)
+        expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).toMatchObject({
+            contentId: expect.any(String),
+            exerciseType: 'reading',
+            correct: true,
+        })
+        expect(fetchMock.mock.calls[0]?.[1]?.body).not.toContain('neko')
+    })
+
+    it('does not send anonymous vocabulary or kana attempts to progress storage', async () => {
+        const fetchMock = vi.fn<typeof fetch>()
+        vi.stubGlobal('fetch', fetchMock)
+        const load: LoadQuestions = async () => ({ questions, levelsUsed: [5] })
+        const vocabularyStore = createTestSessionStore(load)
+        await vocabularyStore.startTest(config)
+        vocabularyStore.submitAnswer('neko')
+        const kanaStore = createTestSessionStore(load)
+        await kanaStore.startTest({
+            levels: [5],
+            questionCount: 1,
+            contentType: 'kana',
+            kanaDirection: 'hiragana-to-romaji',
+        })
+        kanaStore.submitAnswer(kanaStore.currentQuestion.value!.romaji)
+
+        expect(fetchMock).not.toHaveBeenCalled()
+    })
+
+    it('logs vocabulary progress failures without rejecting the answer', async () => {
+        auth.saveSession({
+            user: { id: 'learner-1', email: 'learner@example.com' },
+            accessToken: 'access-token',
+            tokenType: 'Bearer',
+            expiresAt: new Date(Date.now() + 60_000).toISOString(),
+        })
+        vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockRejectedValue(new Error('offline')))
+        const log = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+        const store = createTestSessionStore(async () => ({ questions, levelsUsed: [5] }))
+        await store.startTest(config)
+
+        expect(store.submitAnswer('neko')).toBe(true)
+        await vi.waitFor(() => expect(log).toHaveBeenCalledWith('Unable to record vocabulary progress', expect.any(Error)))
+    })
+
     it('starts a local kana session and checks the selected conversion', async () => {
         const load = vi.fn<LoadQuestions>().mockResolvedValue({ questions, levelsUsed: [5] })
         const store = createTestSessionStore(load)
