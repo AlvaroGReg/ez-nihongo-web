@@ -5,12 +5,15 @@ import DictionaryLevelFilter from '@/components/dictionary/DictionaryLevelFilter
 import DictionaryLoading from '@/components/dictionary/DictionaryLoading.vue'
 import KanjiCard from '@/components/dictionary/KanjiCard.vue'
 import KanjiDetailsDialog from '@/components/dictionary/KanjiDetailsDialog.vue'
+import TextSearchField from '@/components/TextSearchField.vue'
 import { locale, t } from '@/i18n'
 import { loadKanjiCatalog, type KanjiRecord } from '@/services/kanji'
 import type { JlptLevel } from '@/types/domain'
+import { includesSearchText } from '@/utils/textSearch'
 
 const levels: JlptLevel[] = [1, 2, 3, 4, 5]
 const selectedLevels = ref<JlptLevel[]>([5, 4, 3, 2, 1])
+const searchQuery = ref('')
 const catalog = ref<KanjiRecord[]>([])
 const selectedKanji = ref<KanjiRecord | null>(null)
 const isLoading = ref(true)
@@ -19,6 +22,23 @@ const loadError = ref(false)
 const visibleEntries = computed(() =>
     catalog.value
         .filter((entry) => selectedLevels.value.includes(entry.jlpt))
+        .filter((entry) => {
+            const meanings =
+                locale.value === 'es' && entry.jlpt >= 4 && entry.meanings_es?.length
+                    ? entry.meanings_es
+                    : entry.meanings_en
+            return includesSearchText(
+                [
+                    entry.kanji,
+                    entry.heisig_en ?? '',
+                    entry.kun_readings.join('、'),
+                    entry.on_readings.join('、'),
+                    entry.name_readings.join('、'),
+                    meanings.join(', '),
+                ],
+                searchQuery.value,
+            )
+        })
         .sort((left, right) => right.jlpt - left.jlpt),
 )
 const untranslatedLevels = computed(() =>
@@ -44,6 +64,7 @@ onMounted(async () => {
 <template>
     <div class="catalog-dictionary">
         <DictionaryLevelFilter v-model="selectedLevels" />
+        <TextSearchField v-model="searchQuery" />
         <p
             class="translation-notice"
             :class="{ 'translation-notice-hidden': untranslatedLevels.length === 0 }"
@@ -58,7 +79,8 @@ onMounted(async () => {
         <DictionaryLoading v-if="isLoading" />
         <p v-else-if="loadError" class="load-error" role="alert">{{ t('providerCatalogError') }}</p>
         <p v-else-if="visibleEntries.length === 0" class="empty-state">
-            {{ t('dictionaryNoEntries') }}
+            <template v-if="searchQuery.trim()">{{ t('searchNoResults') }}</template>
+            <template v-else>{{ t('dictionaryNoEntries') }}</template>
         </p>
         <ul v-else class="card-grid">
             <li v-for="entry in visibleEntries" :key="entry.id">

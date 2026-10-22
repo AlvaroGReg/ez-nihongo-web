@@ -40,6 +40,28 @@ describe('DictionaryView', () => {
         expect(wrapper.findAll('.chart-scroll')).toHaveLength(6)
         expect(wrapper.find('.kana-cell-basic .kana-romaji').text()).toBe('a')
         expect(wrapper.find('.kana-cell-basic .kana-glyph').text()).toBe('あ')
+
+        const search = wrapper.get('input[type="search"]')
+        await search.setValue('ka')
+        expect(wrapper.findAll('.kana-glyph').map((glyph) => glyph.text())).toEqual(['か', 'カ'])
+        expect(wrapper.findAll('.kana-cell')).toHaveLength(2)
+        expect(wrapper.findAll('.chart-section .section-heading').map((heading) => heading.text())).toEqual([
+            'Main Kana',
+            'Main Kana',
+        ])
+
+        await search.setValue('ba')
+        expect(wrapper.findAll('.kana-glyph').map((glyph) => glyph.text())).toEqual(['ば', 'バ'])
+        expect(wrapper.findAll('.kana-cell')).toHaveLength(2)
+        expect(wrapper.findAll('.basic-grid')).toHaveLength(0)
+        expect(wrapper.findAll('.combination-section')).toHaveLength(0)
+        expect(wrapper.findAll('.chart-section .section-heading').map((heading) => heading.text())).toEqual([
+            'Dakuten Kana',
+            'Dakuten Kana',
+        ])
+
+        await search.setValue('no match')
+        expect(wrapper.get('.empty-state').text()).toBe('No results match your search.')
     })
 
     it('shows an animated loading status while a dictionary catalog is pending', async () => {
@@ -125,6 +147,29 @@ describe('DictionaryView', () => {
         expect(visibleCards[0]!.text()).toContain('JLPT N4')
     })
 
+    it('searches vocabulary by partial romaji, kana, kanji, and the Spanish meaning', async () => {
+        setLocale('es')
+        const wrapper = await mountDictionary()
+        await wrapper.get('#dictionary-tab-vocabulary').trigger('click')
+        await flushPromises()
+
+        const search = wrapper.get('input[type="search"]')
+        for (const query of ['neko', 'nek', 'ねこ', 'ね', '猫', 'gato', 'gat']) {
+            await search.setValue(query)
+            expect(
+                wrapper.findAll('.vocabulary-card').some((card) => card.text().includes('猫')),
+            ).toBe(true)
+        }
+
+        await search.setValue('cat')
+        expect(wrapper.findAll('.vocabulary-card')).toHaveLength(0)
+
+        await search.setValue('no existe')
+        expect(wrapper.get('.empty-state').text()).toBe(
+            'No hay resultados que coincidan con la búsqueda.',
+        )
+    })
+
     it('shows kanji cards, filters by JLPT, and opens all readings in a modal', async () => {
         setLocale('es')
         vi.stubGlobal(
@@ -186,6 +231,13 @@ describe('DictionaryView', () => {
         expect(card.text()).toContain('ひと')
         expect(card.text()).toContain('uno')
         expect(card.text()).toContain('JLPT N5')
+
+        const search = wrapper.get('input[type="search"]')
+        for (const query of ['一', 'ひと-、ひと.つ', 'イチ、イツ', 'uno', 'radical uno', 'one']) {
+            await search.setValue(query)
+            expect(wrapper.findAll('.kanji-card')).toHaveLength(1)
+        }
+        await search.setValue('')
 
         const dialogElement = wrapper.get('dialog').element as HTMLDialogElement
         Object.defineProperty(dialogElement, 'showModal', {

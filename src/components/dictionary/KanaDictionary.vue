@@ -2,74 +2,126 @@
 import { computed } from 'vue'
 
 import { t } from '@/i18n'
+import TextSearchField from '@/components/TextSearchField.vue'
 import { kanaEntries } from '@/services/kana'
+import { includesSearchText } from '@/utils/textSearch'
 
 const basicFamilies = ['a', 'ka', 'sa', 'ta', 'na', 'ha', 'ma', 'ya', 'ra', 'wa', 'n']
 const vowelOrder = ['a', 'i', 'u', 'e', 'o']
 const voicedFamilies = ['ga', 'za', 'da', 'ba', 'pa']
 const combinationRows = ['gya', 'ja', 'bya', 'pya']
+const searchQuery = defineModel<string>({ default: '' })
 
-const basicGrid = computed(() =>
-    vowelOrder.flatMap((vowel) =>
-        basicFamilies.map((family) =>
-            kanaEntries.find(
-                (entry) =>
-                    entry.type === 'gojuon' &&
-                    entry.row === family &&
-                    (family === 'n' ? vowel === 'o' : entry.romaji.endsWith(vowel)),
-            ),
+function matchesKana(entry: (typeof kanaEntries)[number] | undefined): boolean {
+    return (
+        !entry ||
+        includesSearchText([entry.hiragana, entry.katakana, entry.romaji], searchQuery.value)
+    )
+}
+
+function findBasicKana(vowel: string, family: string) {
+    const entry = kanaEntries.find(
+        (candidate) =>
+            candidate.type === 'gojuon' &&
+            candidate.row === family &&
+            (family === 'n' ? vowel === 'o' : candidate.romaji.endsWith(vowel)),
+    )
+    return matchesKana(entry) ? entry : undefined
+}
+
+const basicGrid = computed(() => {
+    const entries = vowelOrder.flatMap((vowel) =>
+        basicFamilies.map((family) => findBasicKana(vowel, family)),
+    )
+    return searchQuery.value.trim() ? entries.filter((entry) => entry !== undefined) : entries
+})
+
+const dakutenEntries = computed(() =>
+    voicedFamilies.flatMap((family) =>
+        kanaEntries.filter(
+            (entry) => entry.type === 'dakuon' && entry.row === family && matchesKana(entry),
         ),
     ),
 )
 
-const dakutenEntries = computed(() =>
-    voicedFamilies.flatMap((family) =>
-        kanaEntries.filter((entry) => entry.type === 'dakuon' && entry.row === family),
-    ),
+const combinationEntries = computed(() =>
+    kanaEntries.filter((entry) => entry.type === 'yoon' && matchesKana(entry)),
 )
-
-const combinationEntries = computed(() => kanaEntries.filter((entry) => entry.type === 'yoon'))
+const hasVisibleKana = computed(
+    () =>
+        basicGrid.value.some(Boolean) ||
+        dakutenEntries.value.length > 0 ||
+        combinationEntries.value.length > 0,
+)
 </script>
 
 <template>
     <div class="kana-dictionary">
-        <section
-            v-for="script in ['hiragana', 'katakana'] as const"
-            :key="script"
-            class="kana-script"
-            :aria-labelledby="`${script}-heading`"
-        >
-            <h2 :id="`${script}-heading`" class="script-heading">
-                {{ t(script === 'hiragana' ? 'hiraganaTitle' : 'katakanaTitle') }}
-            </h2>
+        <TextSearchField v-model="searchQuery" />
+        <p v-if="!hasVisibleKana" class="empty-state">{{ t('searchNoResults') }}</p>
+        <template v-if="hasVisibleKana">
+            <section
+                v-for="script in ['hiragana', 'katakana'] as const"
+                :key="script"
+                class="kana-script"
+                :aria-labelledby="`${script}-heading`"
+            >
+                <h2 :id="`${script}-heading`" class="script-heading">
+                    {{ t(script === 'hiragana' ? 'hiraganaTitle' : 'katakanaTitle') }}
+                </h2>
 
-            <div class="kana-upper-layout">
-                <section class="chart-section">
-                    <h3 class="section-heading">{{ t('gojuon') }}</h3>
-                    <div class="chart-scroll">
-                        <ul class="kana-grid basic-grid" :aria-label="t('gojuon')">
-                            <li
-                                v-for="(entry, index) in basicGrid"
-                                :key="entry?.hiragana ?? `empty-${index}`"
-                                class="kana-cell kana-cell-basic"
+                <div v-if="basicGrid.length > 0 || dakutenEntries.length > 0" class="kana-upper-layout">
+                    <section v-if="basicGrid.length > 0" class="chart-section">
+                        <h3 class="section-heading">{{ t('gojuon') }}</h3>
+                        <div class="chart-scroll">
+                            <ul
+                                class="kana-grid basic-grid"
+                                :class="{ 'basic-grid-search': searchQuery.trim() }"
+                                :aria-label="t('gojuon')"
                             >
-                                <template v-if="entry">
+                                <li
+                                    v-for="(entry, index) in basicGrid"
+                                    :key="entry?.hiragana ?? `empty-${index}`"
+                                    class="kana-cell kana-cell-basic"
+                                >
+                                    <template v-if="entry">
+                                        <span class="kana-romaji">{{ entry.romaji }}</span>
+                                        <span class="kana-glyph" lang="ja">{{ entry[script] }}</span>
+                                    </template>
+                                </li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    <section v-if="dakutenEntries.length > 0" class="chart-section">
+                        <h3 class="section-heading">{{ t('dakuon') }}</h3>
+                        <div class="chart-scroll">
+                            <ul class="kana-grid dakuten-grid" :aria-label="t('dakuon')">
+                                <li
+                                    v-for="entry in dakutenEntries"
+                                    :key="entry.hiragana"
+                                    class="kana-cell kana-cell-dakuten"
+                                >
                                     <span class="kana-romaji">{{ entry.romaji }}</span>
                                     <span class="kana-glyph" lang="ja">{{ entry[script] }}</span>
-                                </template>
-                            </li>
-                        </ul>
-                    </div>
-                </section>
+                                </li>
+                            </ul>
+                        </div>
+                    </section>
+                </div>
 
-                <section class="chart-section">
-                    <h3 class="section-heading">{{ t('dakuon') }}</h3>
+                <section
+                    v-if="combinationEntries.length > 0"
+                    class="chart-section combination-section"
+                >
+                    <h3 class="section-heading">{{ t('yoon') }}</h3>
                     <div class="chart-scroll">
-                        <ul class="kana-grid dakuten-grid" :aria-label="t('dakuon')">
+                        <ul class="kana-grid combination-grid" :aria-label="t('yoon')">
                             <li
-                                v-for="entry in dakutenEntries"
+                                v-for="entry in combinationEntries"
                                 :key="entry.hiragana"
-                                class="kana-cell kana-cell-dakuten"
+                                class="kana-cell"
+                                :class="combinationRows.includes(entry.row) ? 'kana-cell-voiced' : 'kana-cell-combination'"
                             >
                                 <span class="kana-romaji">{{ entry.romaji }}</span>
                                 <span class="kana-glyph" lang="ja">{{ entry[script] }}</span>
@@ -77,25 +129,8 @@ const combinationEntries = computed(() => kanaEntries.filter((entry) => entry.ty
                         </ul>
                     </div>
                 </section>
-            </div>
-
-            <section class="chart-section combination-section">
-                <h3 class="section-heading">{{ t('yoon') }}</h3>
-                <div class="chart-scroll">
-                    <ul class="kana-grid combination-grid" :aria-label="t('yoon')">
-                        <li
-                            v-for="entry in combinationEntries"
-                            :key="entry.hiragana"
-                            class="kana-cell"
-                            :class="combinationRows.includes(entry.row) ? 'kana-cell-voiced' : 'kana-cell-combination'"
-                        >
-                            <span class="kana-romaji">{{ entry.romaji }}</span>
-                            <span class="kana-glyph" lang="ja">{{ entry[script] }}</span>
-                        </li>
-                    </ul>
-                </div>
             </section>
-        </section>
+        </template>
     </div>
 </template>
 
@@ -106,6 +141,11 @@ const combinationEntries = computed(() => kanaEntries.filter((entry) => entry.ty
     min-width: 0;
     max-width: 100%;
     gap: 1rem;
+}
+
+.empty-state {
+    margin: 0;
+    color: var(--muted);
 }
 
 .kana-script {
@@ -150,6 +190,11 @@ const combinationEntries = computed(() => kanaEntries.filter((entry) => entry.ty
 
 .basic-grid {
     grid-template-columns: repeat(11, minmax(4rem, 1fr));
+}
+
+.basic-grid-search {
+    display: flex;
+    flex-wrap: wrap;
 }
 
 .dakuten-grid {
