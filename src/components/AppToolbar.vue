@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 
 import { locale, setLocale, t } from '@/i18n'
+import { auth } from '@/stores/auth'
 import { theme, toggleTheme } from '@/stores/theme'
 
 const isMenuOpen = ref(false)
@@ -21,13 +22,8 @@ function closeMenu(): void {
     <header class="app-toolbar">
         <div class="toolbar-layout">
             <div class="toolbar-navigation">
-                <button
-                    class="menu-toggle"
-                    type="button"
-                    :aria-expanded="isMenuOpen"
-                    :aria-label="t('openNavigation')"
-                    @click="isMenuOpen = !isMenuOpen"
-                >
+                <button class="menu-toggle" type="button" :aria-expanded="isMenuOpen" :aria-label="t('openNavigation')"
+                    @click="isMenuOpen = !isMenuOpen">
                     <span aria-hidden="true">☰</span>
                 </button>
                 <nav v-if="isMenuOpen" class="navigation-menu" :aria-label="t('mainNavigation')">
@@ -44,32 +40,41 @@ function closeMenu(): void {
             </div>
 
             <RouterLink class="toolbar-brand" to="/" @click="closeMenu">
-                <img
-                    :src="`${basePath}res/logos/ez-nihongo/logo-horizontal-${theme === 'light' ? 'blue' : 'white'}.svg`"
-                    alt="EZ Nihongo"
-                />
+                <img :src="`${basePath}res/logos/ez-nihongo/logo-horizontal-${theme === 'light' ? 'blue' : 'white'}.svg`"
+                    alt="EZ Nihongo" />
             </RouterLink>
 
             <nav class="toolbar-actions" :aria-label="t('toolbar')">
                 <label class="toolbar-language">
                     <span class="visually-hidden">{{ t('language') }}</span>
-                    <select
-                        :value="locale"
-                        :aria-label="t('language')"
-                        @change="changeLocale(($event.target as HTMLSelectElement).value)"
-                    >
+                    <select :value="locale" :aria-label="t('language')"
+                        @change="changeLocale(($event.target as HTMLSelectElement).value)">
                         <option value="en">{{ t('english') }}</option>
                         <option value="es">{{ t('spanish') }}</option>
                     </select>
                 </label>
 
-                <button
-                    class="theme-toggle"
-                    type="button"
+                <button class="theme-toggle" type="button"
                     :aria-label="theme === 'light' ? t('switchToDarkTheme') : t('switchToLightTheme')"
-                    @click="toggleTheme"
-                >
+                    @click="toggleTheme">
                     {{ theme === 'light' ? '🌙' : '☀️' }}
+                </button>
+                <RouterLink v-if="!auth.state.user" class="account-icon-button" to="/auth"
+                    :aria-label="t('loginOrRegister')" :title="t('loginOrRegister')">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+                        stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" aria-hidden="true">
+                        <circle cx="12" cy="8" r="3.5" />
+                        <path d="M5 21v-1a7 7 0 0 1 14 0v1" />
+                        <path d="M19 8h4m-2-2 2 2-2 2" />
+                    </svg>
+                </RouterLink>
+                <button v-else class="account-icon-button" type="button" :aria-label="t('signOut')"
+                    :title="t('signOut')" @click="auth.signOut">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+                        stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" aria-hidden="true">
+                        <path d="M10 4H5v16h5" />
+                        <path d="M14 8l4 4-4 4m4-4H9" />
+                    </svg>
                 </button>
             </nav>
         </div>
@@ -123,6 +128,19 @@ function closeMenu(): void {
         gap: 0.75rem;
     }
 
+    .account-icon-button {
+        display: grid;
+        place-items: center;
+        width: 2.65rem;
+        height: 2.65rem;
+        padding: 0;
+        border: 1px solid var(--border);
+        border-radius: 0.7rem;
+        background: var(--surface);
+        color: var(--text);
+        text-decoration: none;
+    }
+
     .menu-toggle {
         width: 2.65rem;
         height: 2.65rem;
@@ -167,7 +185,7 @@ function closeMenu(): void {
         }
     }
 
-    @media (width <= 560px) {
+    @media (width <=560px) {
         padding-inline: 0.75rem;
 
         .toolbar-actions {
@@ -179,7 +197,7 @@ function closeMenu(): void {
         }
     }
 
-    @media (width <= 400px) {
+    @media (width <=400px) {
         .toolbar-layout {
             display: grid;
             grid-template-columns: auto minmax(0, 1fr) auto;
@@ -208,7 +226,8 @@ function closeMenu(): void {
         }
 
         .menu-toggle,
-        .theme-toggle {
+        .theme-toggle,
+        .account-icon-button {
             width: 2.35rem;
             height: 2.35rem;
         }

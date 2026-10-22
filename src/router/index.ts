@@ -7,6 +7,7 @@ import DictionaryView from '@/views/DictionaryView.vue'
 import AboutView from '@/views/AboutView.vue'
 import ResultView from '@/views/ResultView.vue'
 import TestView from '@/views/TestView.vue'
+import ProgressView from '@/views/ProgressView.vue'
 
 const router = createRouter({
     history: createWebHashHistory(import.meta.env.BASE_URL),
@@ -19,6 +20,7 @@ const router = createRouter({
         { path: '/dictionary/:type', name: 'dictionary', component: DictionaryView },
         { path: '/test', name: 'test', component: TestView },
         { path: '/result', name: 'result', component: ResultView },
+        { path: '/progress', name: 'progress', component: ProgressView },
         { path: '/about', name: 'about', component: AboutView },
     ],
     scrollBehavior(to, from) {

@@ -7,6 +7,7 @@ import { setLocale } from '@/i18n'
 import ExerciseView from '@/views/ExerciseView.vue'
 import HomeView from '@/views/HomeView.vue'
 import router from '@/router'
+import { auth } from '@/stores/auth'
 
 async function chooseExercise(
     wrapper: ReturnType<typeof mount>,
@@ -36,6 +37,24 @@ describe('HomeView', () => {
         expect(wrapper.text()).toContain('Vocabulary: study words from JLPT levels N1–N5.')
         expect(wrapper.text()).toContain('Kanji: practice JLPT readings and meanings from N1–N5.')
         expect(wrapper.get('a[href="#/exercises"]').text()).toBe('Go to exercises')
+    })
+
+    it('shows the progress link only while authenticated', () => {
+        auth.signOut()
+        const wrapper = mount(HomeView, { global: { plugins: [router] } })
+        expect(wrapper.find('a[href="#/progress"]').exists()).toBe(false)
+        wrapper.unmount()
+
+        auth.saveSession({
+            user: { id: 'user-1', email: 'learner@example.com' },
+            accessToken: 'access-token',
+            tokenType: 'Bearer',
+            expiresAt: new Date(Date.now() + 60_000).toISOString(),
+        })
+        const authenticatedWrapper = mount(HomeView, { global: { plugins: [router] } })
+        expect(authenticatedWrapper.get('a[href="#/progress"]').text()).toBe('View progress')
+        authenticatedWrapper.unmount()
+        auth.signOut()
     })
 
     it('renders the setup in the selected locale', () => {

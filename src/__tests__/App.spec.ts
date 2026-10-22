@@ -1,10 +1,13 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 
 import { mount } from '@vue/test-utils'
 import App from '../App.vue'
 import router from '../router'
+import { auth } from '@/stores/auth'
 
 describe('App', () => {
+    beforeEach(() => auth.signOut())
+
     it('renders the application shell', () => {
         const wrapper = mount(App, {
             global: {
@@ -14,10 +17,33 @@ describe('App', () => {
         })
         expect(wrapper.find('router-view-stub').exists()).toBe(true)
         expect(wrapper.get('nav').attributes('aria-label')).toBe('Application toolbar')
-        expect(wrapper.text()).not.toContain('Log in or create account')
-        expect(wrapper.find('a[href="#/auth"]').exists()).toBe(false)
+        expect(wrapper.get('a[href="#/auth"]').attributes('aria-label')).toBe(
+            'Log in or create account',
+        )
+        expect(wrapper.get('.toolbar-actions').element.children[0]?.tagName).toBe('A')
+        expect(wrapper.get('.toolbar-actions').element.children[1]?.tagName).toBe('LABEL')
         expect(wrapper.find('select').element).toBeDefined()
         expect(wrapper.find('button[aria-label="Switch to dark theme"]').element).toBeDefined()
+    })
+
+    it('shows the current account and signs out from the toolbar', async () => {
+        auth.saveSession({
+            user: { id: 'user-1', email: 'learner@example.com' },
+            accessToken: 'access-token',
+            tokenType: 'Bearer',
+            expiresAt: new Date(Date.now() + 60_000).toISOString(),
+        })
+        const wrapper = mount(App, {
+            global: {
+                plugins: [router],
+                stubs: { RouterView: true },
+            },
+        })
+
+        expect(wrapper.find('a[href="#/auth"]').exists()).toBe(false)
+        await wrapper.get('button[aria-label="Log out"]').trigger('click')
+        expect(auth.state.accessToken).toBeNull()
+        expect(wrapper.find('a[href="#/auth"]').exists()).toBe(true)
     })
 
     it('opens the vertical navigation with links to exercises and dictionary', async () => {
@@ -50,7 +76,7 @@ describe('App', () => {
         const brand = wrapper.get('.toolbar-brand img')
         expect(brand.attributes('src')).toMatch(/logo-horizontal-blue\.svg$/)
 
-        await wrapper.get('.theme-toggle').trigger('click')
+        await wrapper.get('button.theme-toggle').trigger('click')
 
         expect(brand.attributes('src')).toMatch(/logo-horizontal-white\.svg$/)
     })

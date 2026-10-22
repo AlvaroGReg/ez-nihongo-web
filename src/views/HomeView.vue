@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { t } from '@/i18n'
+import { auth } from '@/stores/auth'
 </script>
 
 <template>
@@ -15,6 +16,13 @@ import { t } from '@/i18n'
             </ul>
             <RouterLink class="button button-primary home-exercises-link" to="/exercises">
                 {{ t('goToExercises') }}
+            </RouterLink>
+            <RouterLink
+                v-if="auth.state.accessToken"
+                class="button button-secondary home-progress-link"
+                to="/progress"
+            >
+                {{ t('viewProgress') }}
             </RouterLink>
         </section>
     </main>
@@ -41,6 +49,12 @@ import { t } from '@/i18n'
 
     .home-exercises-link {
         display: inline-block;
+        text-decoration: none;
+    }
+
+    .home-progress-link {
+        display: inline-block;
+        margin-left: 0.75rem;
         text-decoration: none;
     }
 }
