@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
 
+import { locale, setLocale } from '@/i18n'
 import VocabularyProgressTable from '@/components/progress/VocabularyProgressTable.vue'
 import type { VocabularyAttempt } from '@/services/vocabularyProgress'
 
@@ -96,5 +97,30 @@ describe('VocabularyProgressTable', () => {
 
         expect(wrapper.text()).toContain('No vocabulary exercise results yet.')
         expect(wrapper.find('table').exists()).toBe(false)
+    })
+
+    it('filters progress by partial romaji, kana, kanji, and the selected-language meaning', async () => {
+        const previousLocale = locale.value
+        setLocale('es')
+        const wrapper = mount(VocabularyProgressTable, { props: { rows: attempts } })
+        const search = wrapper.get('input[type="search"]')
+
+        await search.setValue('NE')
+        expect(wrapper.findAll('tbody tr')).toHaveLength(1)
+        expect(wrapper.get('tbody').text()).toContain('猫')
+
+        await search.setValue('水')
+        expect(wrapper.findAll('tbody tr')).toHaveLength(1)
+        expect(wrapper.get('tbody').text()).toContain('水')
+
+        await search.setValue('agua')
+        expect(wrapper.findAll('tbody tr')).toHaveLength(1)
+        expect(wrapper.get('tbody').text()).toContain('水')
+
+        await search.setValue('cat')
+        expect(wrapper.findAll('tbody tr')).toHaveLength(0)
+        expect(wrapper.text()).toContain('No hay resultados que coincidan con la búsqueda.')
+
+        setLocale(previousLocale)
     })
 })

@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 
-import { t } from '@/i18n'
+import TextSearchField from '@/components/TextSearchField.vue'
+import { locale, t } from '@/i18n'
 import type { VocabularyAttempt } from '@/services/vocabularyProgress'
 import type { CatalogEntry } from '@/services/vocabulary'
 import type { JlptLevel } from '@/types/domain'
+import { includesSearchText } from '@/utils/textSearch'
 
 export interface VocabularyProgressRow {
     attempt: VocabularyAttempt
@@ -19,6 +21,7 @@ interface VocabularyWordProgress {
 
 const props = defineProps<{ rows: VocabularyProgressRow[] }>()
 const selectedLevel = ref<'all' | JlptLevel>('all')
+const searchQuery = ref('')
 const wordProgress = computed(() => {
     const grouped = new Map<string, VocabularyWordProgress>()
     const orderedAttempts = [...props.rows].sort(
@@ -37,9 +40,21 @@ const wordProgress = computed(() => {
     return [...grouped.values()]
 })
 const visibleRows = computed(() =>
-    selectedLevel.value === 'all'
-        ? wordProgress.value
-        : wordProgress.value.filter((row) => row.entry?.level === selectedLevel.value),
+    wordProgress.value.filter((row) => {
+        const matchesLevel = selectedLevel.value === 'all' || row.entry?.level === selectedLevel.value
+        const matchesSearch = includesSearchText(
+            row.entry
+                ? [
+                      row.entry.word,
+                      row.entry.furigana,
+                      row.entry.romaji,
+                      row.entry.meaning[locale.value] || row.entry.meaning.en,
+                  ]
+                : [row.contentId],
+            searchQuery.value,
+        )
+        return matchesLevel && matchesSearch
+    }),
 )
 
 function formatDate(value: string): string {
@@ -73,6 +88,7 @@ function outcomeLabel(progress: VocabularyWordProgress): string {
 
 <template>
     <section class="progress-results" aria-label="Vocabulary results">
+        <TextSearchField v-model="searchQuery" />
         <label class="progress-filter">
             {{ t('progressLevelFilter') }}
             <select v-model="selectedLevel">
@@ -85,7 +101,8 @@ function outcomeLabel(progress: VocabularyWordProgress): string {
 
         <p v-if="wordProgress.length === 0" class="progress-empty">{{ t('noProgress') }}</p>
         <p v-else-if="visibleRows.length === 0" class="progress-empty">
-            {{ t('noFilteredProgress') }}
+            <template v-if="searchQuery.trim()">{{ t('searchNoResults') }}</template>
+            <template v-else>{{ t('noFilteredProgress') }}</template>
         </p>
         <div v-else class="progress-table-wrap">
             <table class="progress-table">
