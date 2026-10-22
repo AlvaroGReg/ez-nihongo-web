@@ -5,7 +5,7 @@ Estas reglas complementan el contexto común de `../AGENTS.md`.
 ## Proyecto
 
 - Es una aplicación Vue 3 con Vite, TypeScript y Vue Router.
-- Las especificaciones propias de este repositorio viven en `specs/<version>/`.
+- Las especificaciones propias de este repositorio viven en `specs/<feature>/`, organizadas por funcionalidad y no por versión.
 - Mantén los cambios pequeños y respeta la estructura existente.
 
 ## Estilos CSS
