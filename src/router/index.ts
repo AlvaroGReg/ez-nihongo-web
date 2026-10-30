@@ -8,6 +8,8 @@ import AboutView from '@/views/AboutView.vue'
 import ResultView from '@/views/ResultView.vue'
 import TestView from '@/views/TestView.vue'
 import ProgressView from '@/views/ProgressView.vue'
+import KnownContentView from '@/views/KnownContentView.vue'
+import { auth } from '@/stores/auth'
 
 const router = createRouter({
     history: createWebHashHistory(import.meta.env.BASE_URL),
@@ -21,6 +23,13 @@ const router = createRouter({
         { path: '/test', name: 'test', component: TestView },
         { path: '/result', name: 'result', component: ResultView },
         { path: '/progress', name: 'progress', component: ProgressView },
+        {
+            path: '/known-content', name: 'known-content', component: KnownContentView,
+            beforeEnter: async (to) => {
+                await auth.restoreSession()
+                return auth.state.accessToken ? true : { name: 'auth', query: { redirect: to.fullPath } }
+            },
+        },
         { path: '/about', name: 'about', component: AboutView },
     ],
     scrollBehavior(to, from) {
