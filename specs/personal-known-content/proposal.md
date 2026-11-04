@@ -4,8 +4,8 @@
 
 Plan para desarrollo coordinado con
 [`ez-nihongo-platform/specs/personal-known-content/`](../../../ez-nihongo-platform/specs/personal-known-content/).
-El contrato de servidor se define allí y quedó congelado en la Fase 1 SDD. Este
-plan cubre el flujo de navegador, interfaz y uso en ejercicios.
+El contrato de servidor se define allí. Este plan cubre la gestión de contenido
+personal desde la interfaz de diccionario.
 
 ## Decisiones de producto
 
@@ -14,8 +14,8 @@ plan cubre el flujo de navegador, interfaz y uso en ejercicios.
 - Puede contener elementos de los catálogos existentes o elementos creados por el
   usuario.
 - La lista es manual: se añaden/quitan elementos y los resultados no la cambian.
-- Vocabulario y kanji ofrecen un filtro de ejercicio: todo, sólo conocidos o
-  excluir conocidos.
+- Las entradas propias son contenido de diccionario personal y no se usan en
+  ejercicios.
 - Sin modo offline/anónimo para esta característica.
 
 ## Flujos
@@ -35,26 +35,12 @@ La búsqueda sirve también para comprobar previamente si el concepto ya está e
 el catálogo. No se debe crear una entrada personalizada cuando el usuario decide
 añadir el resultado oficial.
 
-### Usar la lista en ejercicios
+### Diccionario personal
 
-En la configuración de vocabulario y kanji se ofrece el filtro `all`, `known` o
-`not-known`. `known` usa sólo pertenencias de lista, incluidas entradas propias;
-`not-known` excluye las pertenencias y usa el catálogo restante. `all` incorpora
-el catálogo dentro de los niveles seleccionados y las entradas custom propias, sin
-duplicar referencias oficiales de la lista. En una sesión anónima, `all` conserva
-el catálogo y comportamiento actuales. El filtro se guarda en la URL y se conserva
-al reanudar una sesión.
-
-El filtro no altera el nivel JLPT seleccionado. Las entradas propias no tienen
-nivel, por lo que se incluyen en `known`/`all` independientemente de nivel; la UI
-lo indica y no las etiqueta con un nivel oficial. Para `not-known`, el catálogo
-continúa restringido por niveles elegidos.
-
-Si el conjunto resultante es menor que el número solicitado, la web muestra el
-número disponible y ofrece iniciar con esa cantidad, aunque sea menor que diez;
-nunca completa en silencio con contenido excluido por el filtro. Si faltan distractores para un
-ejercicio de kanji de cuatro opciones, el generador puede tomar distractores de
-todo el catálogo, pero las preguntas correctas siguen respetando el filtro.
+La lista permite consultar, buscar, añadir y quitar entradas de los catálogos
+compartidos o vocabulario/kanji propios. Las entradas propias no se incorporan a
+la selección, generación ni persistencia de ejercicios. La integración con
+ejercicios queda fuera de alcance.
 
 ## Acceso y error
 
@@ -69,5 +55,5 @@ todo el catálogo, pero las preguntas correctas siguen respetando el filtro.
 ## Criterio de éxito
 
 Desde la interfaz, una cuenta puede encontrar y guardar una entrada del catálogo
-o crear una propia, volver a verla y obtener sesiones de vocabulario/kanji cuyos
-objetivos se ajustan a `all`, `known` o `not-known`.
+o crear una entrada propia de vocabulario/kanji, volver a verla y gestionarla en
+su diccionario personal. Las entradas propias no participan en ejercicios.

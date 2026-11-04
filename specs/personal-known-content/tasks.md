@@ -15,13 +15,13 @@
 - [x] Sincronizar DTO/rutas/límites y reglas exactas de normalización con la
       plataforma.
 - [x] Cerrar romaji obligatorio, kanji de un carácter y límites aceptados.
-- [x] Reflejar esos acuerdos junto con el manejo de sesión anónima y `all`
-      predeterminado en el contrato compartido.
-- [x] Confirmar reglas de niveles de listas mixtas y pool de distractores para
-      kanji.
+- [x] Reflejar esos acuerdos junto con el manejo de sesión anónima en el contrato
+      compartido.
+- [x] Confirmar que el contenido personal se limita al diccionario y no participa
+      en ejercicios.
 - [x] Definir borrado definitivo de custom y respuesta `alreadyPresent` en POST
       de catálogo.
-- [x] Definir comportamiento de `all` anónimo/autenticado y niveles vacíos.
+- [x] Confirmar que niveles JLPT se usan sólo para filtrar el diccionario.
 - [x] Congelar contrato, actualizar traceability y registrar cualquier decisión
       futura como fuera de alcance.
 
@@ -44,34 +44,10 @@
 - [x] Añadir traducciones ES/EN y pruebas de componentes.
 - [x] Validar: type-check, unit tests y build web.
 
-## Fase 4 — Filtro setup/URL/config (sesión web 3)
+## Fase 4 — Aceptación conjunta
 
-- [ ] Añadir selección all/known/not-known a ejercicios vocabulario/kanji, no
-      kana; sincronizar query y valores inválidos/default all.
-- [ ] Cargar items de usuario y computar objetivos con dedupe, niveles y custom.
-- [ ] Indicar cantidad disponible; prevenir inicio insuficiente sin relajar
-      filtro.
-- [ ] Persistir filtro en TestConfig/sesión y mantener compatibilidad de sesiones
-      legacy; probar retorno a login requerido.
-- [ ] Añadir pruebas unitarias de selección y reglas límite.
-- [ ] Probar niveles vacíos (`levels=none`) para `known`, `all` y `not-known`, y
-      fallback de rutas legacy sin query al nivel N5.
-
-## Fase 5 — Generación de preguntas e integración (sesión web 4)
-
-- [ ] Adaptar proveedores para mapear vocabulario/kanji propios y oficiales a
-      preguntas con IDs no colisionantes.
-- [ ] Mantener pool de objetivos separado del pool de distractores para kanji.
-- [ ] Verificar que los objetivos respetan el filtro y que respuestas/lista no
-      se alteran.
-- [ ] Probar sesiones reanudadas, catálogo mixto, custom, filtro vacío/insuficiente
-      y errores API.
-- [ ] Ejecutar `npm run type-check`, `npm run test:unit -- --run` y
-      `npm run build`.
-
-## Fase 6 — Aceptación conjunta
-
-- [ ] Probar cuenta A/B, alta oficial, alta propia, eliminación y filtros para
-      vocabulario/kanji contra API real.
+- [ ] Probar cuenta A/B, alta oficial, alta propia, búsqueda y eliminación en el
+       diccionario contra API real; verificar que los ejercicios mantienen sus
+       fuentes y comportamiento actuales.
 - [ ] Revisar todos los diffs/status de web y plataforma; comprobar OpenAPI y
       migración; completar trazabilidad y documentar limitaciones pendientes.

@@ -6,10 +6,8 @@
 | REQ-02 Lista única | Vista con tabs/filtros | lista, estados, búsqueda y filtro nivel; implementado |
 | REQ-03 Alta de catálogo/propio | Diálogo, búsqueda local, DTO tipados y flag `alreadyPresent` | formularios propios y validación probados; escenarios catálogo/API pendientes |
 | REQ-04 Quitar | Mutación API y actualización de estado | acción disponible; validación con API real pendiente |
-| REQ-05 Filtros de ejercicios | `TestConfig`, query y generación; filtros sobre objetivos, no distractores | all/known/not-known, custom sin nivel e identidad |
-| REQ-06 Insuficiencia | conteo de objetivos y configuración del tamaño final | cero, menos de 10 y cantidad solicitada |
-| REQ-07 Persistencia/sesión | filtro en config; snapshot de preguntas | URL, legacy, reanudación y cambio posterior |
-| REQ-08 Estados accesibles | i18n, feedback y reintentos | carga/error/éxito en componentes |
+| REQ-05 Uso exclusivo en diccionario | Vista autenticada independiente de ejercicios | ejercicios no consumen la lista personal |
+| REQ-06 Estados accesibles | i18n, feedback y reintentos | carga/error/éxito en componentes |
 
 Estado: Fases 1–3 completadas en implementación. `services/knownContent.ts`
 valida DTO discriminados, bearer, status HTTP y paginación completa hasta 1000;
@@ -22,10 +20,11 @@ de quitar, búsqueda local de catálogos y formularios propios con validación
 temprana. Hay pruebas de componentes de guardado custom y validación de kanji.
 `npm run type-check`, `npm run test:unit -- --run` (26 suites, 103 pruebas) y
 `npm run build` pasan. Pruebas UI específicas de la ruta, alta oficial y DELETE,
-y aceptación contra API real quedan pendientes de integración conjunta.
+y aceptación contra API real quedan pendientes de integración conjunta. No se ha
+implementado integración entre diccionario personal y ejercicios; no forma parte
+del alcance actual.
 
 Verificación de punto de guardado (2026-10-30): se volvieron a ejecutar
 `npm run type-check`, `npm run test:unit -- --run` (26 suites, 103 pruebas) y
-`npm run build`; los tres comandos pasan. Las Fases 4–6 siguen pendientes: no
-están implementados los filtros en setup/URL ni su integración con generación y
-reanudación de ejercicios, y aún falta aceptación conjunta contra la API real.
+`npm run build`; los tres comandos pasan. La aceptación conjunta contra API real
+sigue pendiente. La integración con ejercicios queda fuera de alcance.
