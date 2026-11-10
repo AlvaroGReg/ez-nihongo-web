@@ -26,7 +26,7 @@ const router = createRouter({
         {
             path: '/known-content', name: 'known-content', component: KnownContentView,
             beforeEnter: async (to) => {
-                await auth.restoreSession()
+                if (!auth.state.accessToken) await auth.restoreSession()
                 return auth.state.accessToken ? true : { name: 'auth', query: { redirect: to.fullPath } }
             },
         },
