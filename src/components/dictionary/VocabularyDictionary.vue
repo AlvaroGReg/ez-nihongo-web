@@ -55,8 +55,11 @@ onMounted(async () => {
             <template v-else>{{ t('dictionaryNoEntries') }}</template>
         </p>
         <ul v-else class="card-grid">
-            <li v-for="entry in visibleEntries" :key="entry.contentId ?? `${entry.level}-${entry.word}-${entry.furigana}`">
-                <VocabularyCard :entry="entry" />
+            <li
+                v-for="entry in visibleEntries"
+                :key="entry.contentId ?? `${entry.level}-${entry.word}-${entry.furigana}`"
+            >
+                <VocabularyCard :entry="entry" :search-query="searchQuery" />
             </li>
         </ul>
     </div>

@@ -7,6 +7,7 @@ import { locale, t } from '@/i18n'
 import type { KnownContentType } from '@/services/knownContent'
 import { auth } from '@/stores/auth'
 import { knownContent } from '@/stores/knownContent'
+import { includesSearchText } from '@/utils/textSearch'
 
 const router = useRouter()
 const route = useRoute()
@@ -39,12 +40,10 @@ const counts = computed(() => ({
 }))
 const visibleItems = computed(() => typeItems.value.filter((item) => {
     if (level.value !== 'all' && (item.source !== 'catalog' || item.content.level !== Number(level.value))) return false
-    const query = search.value.trim().toLocaleLowerCase()
-    if (!query) return true
     const contentText = item.contentType === 'vocabulary'
         ? [item.content.word, item.content.reading, item.content.romaji, item.content.meaning]
         : [item.content.kanji, ...item.content.readings, ...item.content.meanings]
-    return contentText.some((part) => part.toLocaleLowerCase().includes(query))
+    return includesSearchText(contentText, search.value)
 }))
 
 async function removeItem(id: string): Promise<void> {

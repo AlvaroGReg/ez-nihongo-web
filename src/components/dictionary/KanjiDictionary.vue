@@ -7,6 +7,7 @@ import KanjiCard from '@/components/dictionary/KanjiCard.vue'
 import KanjiDetailsDialog from '@/components/dictionary/KanjiDetailsDialog.vue'
 import TextSearchField from '@/components/TextSearchField.vue'
 import { locale, t } from '@/i18n'
+import { createRomajiSearchReading, type RomajiSearchReading } from '@/services/kanaRomaji'
 import { loadKanjiCatalog, type KanjiRecord } from '@/services/kanji'
 import type { JlptLevel } from '@/types/domain'
 import { includesSearchText } from '@/utils/textSearch'
@@ -14,7 +15,14 @@ import { includesSearchText } from '@/utils/textSearch'
 const levels: JlptLevel[] = [1, 2, 3, 4, 5]
 const selectedLevels = ref<JlptLevel[]>([5, 4, 3, 2, 1])
 const searchQuery = ref('')
-const catalog = ref<KanjiRecord[]>([])
+type SearchableKanjiRecord = KanjiRecord & {
+    searchReadingsRomaji: string[]
+    searchReadings: {
+        kun: RomajiSearchReading[]
+        on: RomajiSearchReading[]
+    }
+}
+const catalog = ref<SearchableKanjiRecord[]>([])
 const selectedKanji = ref<KanjiRecord | null>(null)
 const isLoading = ref(true)
 const loadError = ref(false)
@@ -33,7 +41,7 @@ const visibleEntries = computed(() =>
                     entry.heisig_en ?? '',
                     entry.kun_readings.join('、'),
                     entry.on_readings.join('、'),
-                    entry.name_readings.join('、'),
+                    ...entry.searchReadingsRomaji,
                     meanings.join(', '),
                 ],
                 searchQuery.value,
@@ -52,7 +60,20 @@ const untranslatedLevels = computed(() =>
 
 onMounted(async () => {
     try {
-        catalog.value = (await Promise.all(levels.map((level) => loadKanjiCatalog(level)))).flat()
+        const entries = (await Promise.all(levels.map((level) => loadKanjiCatalog(level)))).flat()
+        catalog.value = entries.map((entry) => {
+            const searchReadings = {
+                kun: entry.kun_readings.map(createRomajiSearchReading),
+                on: entry.on_readings.map(createRomajiSearchReading),
+            }
+            return {
+                ...entry,
+                searchReadings,
+                searchReadingsRomaji: [...searchReadings.kun, ...searchReadings.on].flatMap(
+                    (reading) => reading.forms,
+                ),
+            }
+        })
     } catch {
         loadError.value = true
     } finally {
@@ -84,7 +105,12 @@ onMounted(async () => {
         </p>
         <ul v-else class="card-grid">
             <li v-for="entry in visibleEntries" :key="entry.id">
-                <KanjiCard :entry="entry" @open="selectedKanji = $event" />
+                <KanjiCard
+                    :entry="entry"
+                    :search-query="searchQuery"
+                    :search-readings="entry.searchReadings"
+                    @open="selectedKanji = $event"
+                />
             </li>
         </ul>
         <KanjiDetailsDialog :entry="selectedKanji" @close="selectedKanji = null" />

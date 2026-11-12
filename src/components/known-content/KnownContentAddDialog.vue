@@ -7,6 +7,7 @@ import { createVocabularyContentId } from '@/services/content'
 import { loadKanjiCatalog, type KanjiRecord } from '@/services/kanji'
 import { knownContent } from '@/stores/knownContent'
 import type { KnownContentType } from '@/services/knownContent'
+import { includesSearchText } from '@/utils/textSearch'
 
 const props = defineProps<{ contentType: KnownContentType }>()
 const emit = defineEmits<{ close: []; saved: [] }>()
@@ -42,17 +43,22 @@ onMounted(async () => {
 })
 
 const matches = computed(() => {
-    const needle = query.value.trim().toLocaleLowerCase()
-    if (!needle) return []
+    if (!query.value.trim()) return []
     if (type.value === 'vocabulary') {
         return vocabulary.value.filter((entry) =>
-            [entry.word, entry.furigana, entry.romaji, entry.meaning.en, entry.meaning.es]
-                .some((value) => value?.toLocaleLowerCase().includes(needle)),
+            includesSearchText(
+                [entry.word, entry.furigana, entry.romaji, entry.meaning.en, entry.meaning.es].filter(
+                    (value): value is string => value !== undefined,
+                ),
+                query.value,
+            ),
         ).slice(0, 40)
     }
     return kanji.value.filter((entry) =>
-        [entry.kanji, ...entry.on_readings, ...entry.kun_readings, ...entry.meanings_en, ...(entry.meanings_es ?? [])]
-            .some((value) => value.toLocaleLowerCase().includes(needle)),
+        includesSearchText(
+            [entry.kanji, ...entry.on_readings, ...entry.kun_readings, ...entry.meanings_en, ...(entry.meanings_es ?? [])],
+            query.value,
+        ),
     ).slice(0, 40)
 })
 

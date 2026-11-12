@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+import SearchHighlight from '@/components/dictionary/SearchHighlight.vue'
 import { locale } from '@/i18n'
 import type { CatalogEntry } from '@/services/vocabulary'
 
-const props = defineProps<{ entry: CatalogEntry }>()
+const props = defineProps<{ entry: CatalogEntry; searchQuery: string }>()
 
 const meaning = computed(() => props.entry.meaning[locale.value] || props.entry.meaning.en)
 </script>
@@ -13,11 +14,35 @@ const meaning = computed(() => props.entry.meaning[locale.value] || props.entry.
     <article class="vocabulary-card" :aria-label="`${entry.word}: ${meaning}`">
         <span class="level-badge">JLPT N{{ entry.level }}</span>
         <div class="writing-block">
-            <span class="furigana" lang="ja">{{ entry.furigana }}</span>
-            <span class="main-writing" lang="ja">{{ entry.word }}</span>
-            <span class="romaji">{{ entry.romaji }}</span>
+            <span class="furigana" lang="ja">
+                <SearchHighlight
+                    v-if="searchQuery.trim()"
+                    :text="entry.furigana"
+                    :query="searchQuery"
+                />
+                <template v-else>{{ entry.furigana }}</template>
+            </span>
+            <span class="main-writing" lang="ja">
+                <SearchHighlight
+                    v-if="searchQuery.trim()"
+                    :text="entry.word"
+                    :query="searchQuery"
+                />
+                <template v-else>{{ entry.word }}</template>
+            </span>
+            <span class="romaji">
+                <SearchHighlight
+                    v-if="searchQuery.trim()"
+                    :text="entry.romaji"
+                    :query="searchQuery"
+                />
+                <template v-else>{{ entry.romaji }}</template>
+            </span>
         </div>
-        <p class="meaning">{{ meaning }}</p>
+        <p class="meaning">
+            <SearchHighlight v-if="searchQuery.trim()" :text="meaning" :query="searchQuery" />
+            <template v-else>{{ meaning }}</template>
+        </p>
         <span v-if="entry.contentId" class="content-id">{{ entry.contentId }}</span>
     </article>
 </template>
