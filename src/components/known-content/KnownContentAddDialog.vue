@@ -8,14 +8,15 @@ import { loadKanjiCatalog, type KanjiRecord } from '@/services/kanji'
 import { knownContent } from '@/stores/knownContent'
 import type { KnownContentType } from '@/services/knownContent'
 
+const props = defineProps<{ contentType: KnownContentType }>()
 const emit = defineEmits<{ close: []; saved: [] }>()
-const type = ref<KnownContentType>('vocabulary')
+const type = ref<KnownContentType>(props.contentType)
 const query = ref('')
 const catalogLoading = ref(true)
 const catalogError = ref(false)
 const vocabulary = ref<CatalogEntry[]>([])
 const kanji = ref<KanjiRecord[]>([])
-const customMode = ref(false)
+const customMode = ref(true)
 const savingId = ref('')
 const error = ref('')
 const message = ref('')
@@ -114,7 +115,7 @@ async function submitCustom(): Promise<void> {
             </header>
             <label class="field">
                 <span>{{ t('knownContentType') }}</span>
-                <select v-model="type" @change="customMode = false; query = ''; resetFeedback()">
+                <select v-model="type" @change="query = ''; resetFeedback()">
                     <option value="vocabulary">{{ t('vocabularyExercise') }}</option>
                     <option value="kanji">{{ t('kanjiExercise') }}</option>
                 </select>
@@ -155,7 +156,7 @@ async function submitCustom(): Promise<void> {
                     <label class="field"><span>{{ t('knownContentMeanings') }}</span><textarea v-model="form.meanings" :placeholder="t('knownContentArrayHint')" required /></label>
                 </template>
                 <button class="button button-secondary" type="submit">{{ t('knownContentSave') }}</button>
-                <button class="button button-quiet" type="button" @click="customMode = false">{{ t('backToSetup') }}</button>
+                <button class="button button-quiet" type="button" @click="customMode = false; resetFeedback()">{{ t('knownContentBrowseCatalog') }}</button>
             </form>
             <p v-if="message" class="message" role="status">{{ message }}</p>
             <p v-if="error" class="message message-error" role="alert">{{ error }}</p>

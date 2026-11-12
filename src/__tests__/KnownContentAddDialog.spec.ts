@@ -22,8 +22,13 @@ describe('KnownContentAddDialog', () => {
     })
 
     it('submits a custom vocabulary item and announces success', async () => {
-        const wrapper = mount(KnownContentAddDialog)
+        const wrapper = mount(KnownContentAddDialog, { props: { contentType: 'vocabulary' } })
         await flushPromises()
+        expect(wrapper.find('[role="dialog"]').exists()).toBe(true)
+        expect(wrapper.find('form').exists()).toBe(true)
+        expect(wrapper.get('select').element.value).toBe('vocabulary')
+        await wrapper.findAll('button.button-quiet').find((button) => button.text().includes('Browse the catalog'))!.trigger('click')
+        expect(wrapper.find('select').exists()).toBe(true)
         await wrapper.findAll('button.button-quiet').find((button) => button.text().includes('Create custom content'))!.trigger('click')
         const fields = wrapper.findAll('input')
         await fields[0]!.setValue('語彙')
@@ -37,10 +42,10 @@ describe('KnownContentAddDialog', () => {
     })
 
     it('does not submit a kanji form with no readings', async () => {
-        const wrapper = mount(KnownContentAddDialog)
+        const wrapper = mount(KnownContentAddDialog, { props: { contentType: 'vocabulary' } })
         await flushPromises()
         await wrapper.get('select').setValue('kanji')
-        await wrapper.findAll('button.button-quiet').find((button) => button.text().includes('Create custom content'))!.trigger('click')
+        expect(wrapper.findAll('textarea')).toHaveLength(2)
         await wrapper.findAll('input')[0]!.setValue('学')
         await wrapper.findAll('textarea')[0]!.setValue('')
         await wrapper.findAll('textarea')[1]!.setValue('study')

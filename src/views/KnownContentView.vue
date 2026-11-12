@@ -84,7 +84,7 @@ async function removeItem(id: string): Promise<void> {
             </ul>
             <p v-if="removeError" class="message message-error" role="alert">{{ t('knownContentRemoveError') }}</p>
         </section>
-        <KnownContentAddDialog v-if="showAdd" @close="showAdd = false" @saved="load" />
+        <KnownContentAddDialog v-if="showAdd" :content-type="type" @close="showAdd = false" @saved="load" />
     </main>
 </template>
 
