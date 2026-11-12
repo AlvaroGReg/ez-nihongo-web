@@ -21,6 +21,7 @@ const customMode = ref(true)
 const savingId = ref('')
 const error = ref('')
 const message = ref('')
+const catalogDuplicateId = ref('')
 const form = ref({ word: '', reading: '', romaji: '', meaning: '', kanji: '', readings: '', meanings: '' })
 
 function vocabularyId(entry: CatalogEntry): string {
@@ -62,7 +63,11 @@ const matches = computed(() => {
     ).slice(0, 40)
 })
 
-function resetFeedback(): void { error.value = ''; message.value = '' }
+function resetFeedback(): void {
+    error.value = ''
+    message.value = ''
+    catalogDuplicateId.value = ''
+}
 
 async function addOfficial(id: string): Promise<void> {
     resetFeedback()
@@ -106,8 +111,19 @@ async function submitCustom(): Promise<void> {
         emit('saved')
         form.value = { word: '', reading: '', romaji: '', meaning: '', kanji: '', readings: '', meanings: '' }
     } catch (cause) {
-        const code = (cause as { code?: string }).code
-        error.value = code === 'catalog-duplicate' ? t('knownContentCatalogDuplicate') : code === 'duplicate' ? t('knownContentDuplicate') : t('knownContentSaveError')
+        const problem = typeof cause === 'object' && cause !== null ? cause as Record<string, unknown> : {}
+        const code = problem.code
+        if (
+            code === 'catalog-duplicate' &&
+            problem.contentType === type.value &&
+            typeof problem.catalogContentId === 'string' &&
+            problem.catalogContentId.length > 0
+        ) {
+            catalogDuplicateId.value = problem.catalogContentId
+            error.value = t('knownContentCatalogDuplicate')
+        } else {
+            error.value = code === 'duplicate' ? t('knownContentDuplicate') : t('knownContentSaveError')
+        }
     }
 }
 </script>
@@ -166,6 +182,13 @@ async function submitCustom(): Promise<void> {
             </form>
             <p v-if="message" class="message" role="status">{{ message }}</p>
             <p v-if="error" class="message message-error" role="alert">{{ error }}</p>
+            <button
+                v-if="catalogDuplicateId"
+                class="button button-secondary"
+                type="button"
+                :disabled="savingId !== ''"
+                @click="addOfficial(catalogDuplicateId)"
+            >{{ savingId === catalogDuplicateId ? t('authSubmitting') : t('knownContentAddCatalogMatch') }}</button>
         </section>
     </div>
 </template>

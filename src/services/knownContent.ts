@@ -141,12 +141,26 @@ async function request<T>(path: string, init: RequestInit = {}, validate: (value
     })
     if (!response.ok) {
         let code: string | undefined
+        let problemDetails: Record<string, unknown> | undefined
         try {
             const problem: unknown = await response.json()
-            if (isRecord(problem) && typeof problem.code === 'string') code = problem.code
+            if (isRecord(problem)) {
+                problemDetails = problem
+                if (typeof problem.code === 'string') code = problem.code
+            }
         } catch { /* Problem Details may have no JSON body. */ }
-        const error = new Error(code ?? `Known content request failed with HTTP ${response.status}`) as Error & { code?: string }
+        const error = new Error(code ?? `Known content request failed with HTTP ${response.status}`) as Error & {
+            code?: string
+            contentType?: KnownContentType
+            catalogContentId?: string
+        }
         error.code = code
+        if (problemDetails?.contentType === 'vocabulary' || problemDetails?.contentType === 'kanji') {
+            error.contentType = problemDetails.contentType
+        }
+        if (typeof problemDetails?.catalogContentId === 'string') {
+            error.catalogContentId = problemDetails.catalogContentId
+        }
         throw error
     }
     const payload = await readJson(response)
@@ -201,7 +215,7 @@ export function addCatalogKnownContent(
 ): Promise<AddCatalogKnownContentResult> {
     const url = new URL(`${KNOWN_CONTENT_ENDPOINT}/catalog`, globalThis.location?.origin ?? 'http://localhost')
     url.searchParams.set('language', language)
-    return request(url.pathname + url.search, {
+    return request(`/catalog${url.search}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contentType, catalogContentId }),

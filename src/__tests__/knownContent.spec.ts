@@ -85,6 +85,9 @@ describe('known content API', () => {
         await expect(createCustomVocabulary({ word: '猫', reading: 'ねこ', romaji: 'neko', meaning: 'cat' })).resolves.toMatchObject({ contentType: 'vocabulary' })
         await expect(removeKnownContent('item/1')).resolves.toBeUndefined()
 
+        const catalogUrl = new URL(String(fetchMock.mock.calls[0]?.[0]), 'http://localhost')
+        expect(catalogUrl.pathname).toBe('/api/v1/me/known-content/catalog')
+        expect(catalogUrl.searchParams.get('language')).toBe('es')
         expect(fetchMock.mock.calls[0]?.[1]?.body).toBe(JSON.stringify({ contentType: 'vocabulary', catalogContentId: 'vocabulary:猫:ねこ' }))
         expect(fetchMock.mock.calls[1]?.[1]?.body).toBe(JSON.stringify({ kanji: '𠀀', readings: ['あ'], meanings: ['custom'] }))
         expect(String(fetchMock.mock.calls[3]?.[0])).toContain('item%2F1')
@@ -97,6 +100,12 @@ describe('known content API', () => {
         auth.saveSession({ user: { id: 'user-1', email: 'learner@example.com' }, accessToken: 'access-token', tokenType: 'Bearer', expiresAt: new Date(Date.now() + 60_000).toISOString() })
         vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 409 })))
         await expect(getKnownContentPage()).rejects.toThrow('HTTP 409')
+
+        vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockResolvedValue(Response.json({
+            code: 'catalog-duplicate', contentType: 'kanji', catalogContentId: 'kanji:学',
+        }, { status: 409 })))
+        await expect(createCustomKanji({ kanji: '学', readings: ['がく'], meanings: ['study'] }))
+            .rejects.toMatchObject({ code: 'catalog-duplicate', contentType: 'kanji', catalogContentId: 'kanji:学' })
 
         vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockResolvedValue(Response.json({ total: 1, offset: 0, limit: 50, items: [{ ...vocabularyItem, content: { ...vocabularyItem.content, level: 'N5' } }] })))
         await expect(getKnownContentPage()).rejects.toThrow('Invalid known content response')
