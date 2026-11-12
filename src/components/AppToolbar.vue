@@ -33,6 +33,9 @@ function closeMenu(): void {
                     <RouterLink class="dictionary-link" to="/dictionary" @click="closeMenu">
                         {{ t('dictionary') }}
                     </RouterLink>
+                    <RouterLink to="/my-vocabulary" @click="closeMenu">
+                        {{ t('myVocabularyTitle') }}
+                    </RouterLink>
                     <RouterLink to="/about" @click="closeMenu">
                         {{ t('about') }}
                     </RouterLink>
@@ -68,14 +71,14 @@ function closeMenu(): void {
                         <path d="M19 8h4m-2-2 2 2-2 2" />
                     </svg>
                 </RouterLink>
-                <button v-else class="account-icon-button" type="button" :aria-label="t('signOut')"
-                    :title="t('signOut')" @click="auth.signOut">
+                <RouterLink v-else class="account-icon-button" to="/my-space"
+                    :aria-label="t('clientArea')" :title="t('clientArea')">
                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
                         stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" aria-hidden="true">
-                        <path d="M10 4H5v16h5" />
-                        <path d="M14 8l4 4-4 4m4-4H9" />
+                        <circle cx="12" cy="8" r="3.5" />
+                        <path d="M5 21v-1a7 7 0 0 1 14 0v1" />
                     </svg>
-                </button>
+                </RouterLink>
             </nav>
         </div>
     </header>

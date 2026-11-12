@@ -136,6 +136,10 @@ describe('DictionaryView', () => {
         expect(wrapper.get('.vocabulary-card').text()).toContain('ねこ')
         expect(wrapper.get('.vocabulary-card').text()).toContain('neko')
 
+        await wrapper.get('input[type="search"]').setValue('gato')
+        expect(wrapper.get('.vocabulary-card mark').text()).toBe('gato')
+        await wrapper.get('input[type="search"]').setValue('')
+
         for (const level of [1, 2, 3, 5]) {
             await wrapper.get(`input[value="${level}"]`).setValue(false)
         }
@@ -188,7 +192,7 @@ describe('DictionaryView', () => {
                                 kun_readings: ['かた'],
                                 meanings_en: ['word'],
                                 meanings_es: ['palabra'],
-                                name_readings: [],
+                                name_readings: ['ほげ'],
                                 on_readings: ['ゴ'],
                                 unicode: '8A9E',
                                 id: 'n4-1',
@@ -214,6 +218,11 @@ describe('DictionaryView', () => {
         expect(wrapper.get('.translation-notice').text()).toContain('N3, N2, N1')
         expect(wrapper.get('.translation-notice').text()).toContain('no están traducidos al español')
 
+        const search = wrapper.get('input[type="search"]')
+        await search.setValue('hoge')
+        expect(wrapper.findAll('.kanji-card')).toHaveLength(0)
+        await search.setValue('')
+
         setLocale('en')
         await nextTick()
         expect(wrapper.get('.translation-notice').text()).toBe('')
@@ -229,13 +238,32 @@ describe('DictionaryView', () => {
         expect(wrapper.findAll('dialog')).toHaveLength(1)
         expect(card.text()).toContain('一')
         expect(card.text()).toContain('ひと')
+        expect(card.text()).toContain('イチ')
         expect(card.text()).toContain('uno')
         expect(card.text()).toContain('JLPT N5')
+        expect(card.text()).not.toContain('Lecturas kun')
+        expect(card.text()).not.toContain('Lecturas on')
+        expect(card.text()).not.toContain('はじめ')
 
-        const search = wrapper.get('input[type="search"]')
         for (const query of ['一', 'ひと-、ひと.つ', 'イチ、イツ', 'uno', 'radical uno', 'one']) {
             await search.setValue(query)
             expect(wrapper.findAll('.kanji-card')).toHaveLength(1)
+        }
+        await search.setValue('sen')
+        const riverCard = wrapper.findAll('.kanji-card').find((candidate) => candidate.text().includes('川'))!
+        expect(riverCard.text()).toContain('セン')
+        expect(riverCard.text()).toContain('sen')
+        expect(riverCard.findAll('mark').some((mark) => mark.text() === 'sen')).toBe(true)
+        await search.setValue('rio')
+        const riverCardByMeaning = wrapper.findAll('.kanji-card').find((candidate) => candidate.text().includes('川'))!
+        expect(riverCardByMeaning.findAll('mark').some((mark) => mark.text() === 'río')).toBe(true)
+        await search.setValue('yo')
+        for (const kanji of ['四', '八', '女', '川']) {
+            const result = wrapper.findAll('.kanji-card').find((candidate) => candidate.text().includes(kanji))
+            expect(result).toBeDefined()
+            expect(result!.findAll('mark').some((mark) => mark.text().toLocaleLowerCase().includes('yo'))).toBe(
+                true,
+            )
         }
         await search.setValue('')
 
@@ -249,7 +277,7 @@ describe('DictionaryView', () => {
                 dialogElement.dispatchEvent(new Event('close'))
             },
         })
-        await card.trigger('click')
+        await wrapper.get('.kanji-card:not(.kanji-card-expanded)').trigger('click')
         await flushPromises()
 
         const dialog = wrapper.get('dialog')
