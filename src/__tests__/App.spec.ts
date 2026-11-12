@@ -26,7 +26,7 @@ describe('App', () => {
         expect(wrapper.find('button[aria-label="Switch to dark theme"]').element).toBeDefined()
     })
 
-    it('shows the current account and signs out from the toolbar', async () => {
+    it('links signed-in users to the customer area from the toolbar', async () => {
         auth.saveSession({
             user: { id: 'user-1', email: 'learner@example.com' },
             accessToken: 'access-token',
@@ -41,9 +41,8 @@ describe('App', () => {
         })
 
         expect(wrapper.find('a[href="#/auth"]').exists()).toBe(false)
-        await wrapper.get('button[aria-label="Log out"]').trigger('click')
-        expect(auth.state.accessToken).toBeNull()
-        expect(wrapper.find('a[href="#/auth"]').exists()).toBe(true)
+        expect(wrapper.get('a[href="#/my-space"]').attributes('aria-label')).toBe('Customer area')
+        expect(wrapper.find('button[aria-label="Log out"]').exists()).toBe(false)
     })
 
     it('opens the vertical navigation with links to exercises and dictionary', async () => {
@@ -61,6 +60,7 @@ describe('App', () => {
         expect(brand.attributes('alt')).toBe('EZ Nihongo')
         expect(wrapper.get('.navigation-menu a').attributes('href')).toBe('#/exercises')
         expect(wrapper.get('.dictionary-link').attributes('href')).toBe('#/dictionary')
+        expect(wrapper.get('.navigation-menu a:nth-child(3)').attributes('href')).toBe('#/my-vocabulary')
         expect(wrapper.get('.navigation-menu a:last-child').attributes('href')).toBe('#/about')
         expect(wrapper.get('.navigation-menu a:last-child').text()).toBe('About')
     })

@@ -58,7 +58,7 @@ async function removeItem(id: string): Promise<void> {
     <main class="page-shell known-content-page">
         <section class="hero-card" aria-labelledby="known-content-title">
             <div class="page-heading">
-                <div><p class="eyebrow">{{ t('appTitle') }}</p><h1 id="known-content-title">{{ t('knownContentTitle') }}</h1>
+                <div><p class="eyebrow">{{ t('appTitle') }}</p><h1 id="known-content-title">{{ t('myVocabularyTitle') }}</h1>
                     <p class="hero-copy">{{ t('knownContentDescription') }}</p></div>
                 <button class="button button-primary" type="button" @click="showAdd = true">＋ {{ t('knownContentAdd') }}</button>
             </div>
@@ -89,7 +89,8 @@ async function removeItem(id: string): Promise<void> {
 </template>
 
 <style scoped>
-.known-content-page { max-width: 68rem; }
+.known-content-page { display: grid; justify-items: center; }
+.known-content-page .hero-card { max-width: none; }
 .page-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
 .page-heading h1 { margin: 0; }
 .page-heading .hero-copy { margin-block: .5rem 0; }

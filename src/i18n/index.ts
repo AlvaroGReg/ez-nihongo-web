@@ -17,6 +17,11 @@ const english = {
     goToExercises: 'Go to exercises',
     viewProgress: 'View progress',
     progressTitle: 'Exercise progress',
+    mySpaceTitle: 'My space',
+    mySpaceDescription: 'Your progress and personal vocabulary in one place.',
+    myVocabularyTitle: 'My vocabulary',
+    clientArea: 'Customer area',
+    openSection: 'Open section',
     vocabularyProgressTitle: 'Vocabulary progress',
     vocabularyProgressDescription: 'Review your vocabulary exercise results.',
     allProgressDescription:
@@ -240,6 +245,11 @@ const spanish: Partial<Record<TranslationKey, string>> = {
     goToExercises: 'Ir a ejercicios',
     viewProgress: 'Ver progreso',
     progressTitle: 'Progreso de ejercicios',
+    mySpaceTitle: 'Mi espacio',
+    mySpaceDescription: 'Tu progreso y tu vocabulario personal, en un mismo lugar.',
+    myVocabularyTitle: 'Mi vocabulario',
+    clientArea: 'Área de cliente',
+    openSection: 'Abrir sección',
     vocabularyProgressTitle: 'Progreso de vocabulario',
     vocabularyProgressDescription: 'Consulta los resultados de tus ejercicios de vocabulario.',
     allProgressDescription:

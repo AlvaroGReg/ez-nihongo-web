@@ -9,6 +9,7 @@ import ResultView from '@/views/ResultView.vue'
 import TestView from '@/views/TestView.vue'
 import ProgressView from '@/views/ProgressView.vue'
 import KnownContentView from '@/views/KnownContentView.vue'
+import MySpaceView from '@/views/MySpaceView.vue'
 import { auth } from '@/stores/auth'
 
 const router = createRouter({
@@ -24,7 +25,14 @@ const router = createRouter({
         { path: '/result', name: 'result', component: ResultView },
         { path: '/progress', name: 'progress', component: ProgressView },
         {
-            path: '/known-content', name: 'known-content', component: KnownContentView,
+            path: '/known-content', alias: '/my-vocabulary', name: 'known-content', component: KnownContentView,
+            beforeEnter: async (to) => {
+                if (!auth.state.accessToken) await auth.restoreSession()
+                return auth.state.accessToken ? true : { name: 'auth', query: { redirect: to.fullPath } }
+            },
+        },
+        {
+            path: '/my-space', name: 'my-space', component: MySpaceView,
             beforeEnter: async (to) => {
                 if (!auth.state.accessToken) await auth.restoreSession()
                 return auth.state.accessToken ? true : { name: 'auth', query: { redirect: to.fullPath } }
