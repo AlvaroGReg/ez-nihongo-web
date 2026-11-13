@@ -95,4 +95,12 @@ describe('authentication API', () => {
             code: 'authInvalidCredentials',
         } satisfies Partial<AuthApiError>)
     })
+
+    it.each([404, 500, 503])('reports HTTP %s as an unavailable authentication service', async (status) => {
+        vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status })))
+
+        await expect(authenticate('login', 'learner@example.com', 'Good-Pass1!')).rejects.toMatchObject({
+            code: 'authServiceUnavailable',
+        } satisfies Partial<AuthApiError>)
+    })
 })

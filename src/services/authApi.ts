@@ -15,6 +15,7 @@ export interface AuthSession {
 
 export type AuthErrorCode =
     | 'authConnectionError'
+    | 'authServiceUnavailable'
     | 'authRequestError'
     | 'authInvalidCredentials'
     | 'authAccountExists'
@@ -76,6 +77,9 @@ export async function authenticate(
         if (response.status === 409) throw new AuthApiError('authAccountExists')
         if (response.status === 429) throw new AuthApiError('authRateLimited')
         if (response.status === 400) throw new AuthApiError('authRequestError')
+        if (response.status === 404 || response.status >= 500) {
+            throw new AuthApiError('authServiceUnavailable')
+        }
         throw new AuthApiError('authUnknownError')
     }
 
